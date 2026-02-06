@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢您对 LinknLink Add-ons 仓库的兴趣！本文档将指导您如何参与贡献。
+感谢您对 LinknLink Docker 容器应用仓库的兴趣！本文档将指导您如何参与贡献。
 
 ## 如何贡献
 
@@ -20,23 +20,23 @@
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 创建 Pull Request
 
-### 添加新 Addon
+### 添加新容器应用
 
-1. 使用脚本创建 addon：
+1. 使用脚本创建容器应用：
    ```bash
-   ./scripts/add-addon.sh my-new-addon
+   ./scripts/add-addon.sh my-new-container
    ```
 
-2. 开发 addon 功能
+2. 开发容器应用功能
 
-3. 验证 addon：
+3. 验证容器应用：
    ```bash
-   ./scripts/validate-addon.sh my-new-addon
+   ./scripts/validate-addon.sh my-new-container
    ```
 
 4. 测试构建：
    ```bash
-   ./scripts/build-addon.sh my-new-addon
+   ./scripts/build-addon.sh my-new-container
    ```
 
 5. 提交 Pull Request
@@ -133,22 +133,22 @@ cd addons
 
 ## 测试
 
-### 验证 Addon
+### 验证容器应用
 
 ```bash
-./scripts/validate-addon.sh <addon-name>
+./scripts/validate-addon.sh <container-name>
 ```
 
 ### 构建测试
 
 ```bash
-./scripts/build-addon.sh <addon-name> --arch amd64
+./scripts/build-addon.sh <container-name> --arch amd64
 ```
 
 ### 本地运行
 
 ```bash
-cd addons/<addon-name>
+cd addons/<container-name>
 docker-compose up --build
 ```
 
@@ -159,7 +159,7 @@ docker-compose up --build
 - README.md: 主要文档
 - docs/DESIGN.md: 设计文档
 - docs/ADDON_GUIDE.md: 开发指南
-- 各 addon 的 README.md
+- 各容器应用的 README.md
 
 ### 文档要求
 

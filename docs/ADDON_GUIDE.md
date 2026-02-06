@@ -1,6 +1,6 @@
-# Addon 开发指南
+# Docker 容器应用开发指南
 
-本指南介绍如何在这个仓库中开发和添加新的 Home Assistant Add-on。
+本指南介绍如何在这个仓库中开发和添加新的 Docker 容器应用。这些容器应用旨在为 Ubuntu Server 系统（特别是鲁班猫设备）提供相关能力。
 
 ## 目录
 
@@ -37,8 +37,8 @@
 
 ```
 addon-name/
-├── repository.json      # Addon 元数据（必需）
 ├── VERSION             # 版本号文件（必需）
+├── repository.json     # Addon 元数据（可选，用于指定架构）
 ├── README.md           # 说明文档（推荐）
 ├── CHANGELOG.md        # 更新日志（推荐）
 ├── common/             # 通用文件目录（必需）
@@ -51,16 +51,21 @@ addon-name/
 └── scripts/            # Addon 特定脚本（可选）
 ```
 
-### repository.json
+### repository.json（可选）
 
-Addon 的元数据文件，定义基本信息：
+可选的元数据文件，主要用于指定支持的架构。如果不提供，构建时会使用默认架构（amd64, aarch64, armv7）。
 
 ```json
 {
-  "name": "Home Assistant Add-on: My Addon",
+  "name": "My Container",
   "url": "https://github.com/linknlink/addons",
-  "maintainer": "linknlink <https://github.com/linknlink>"
+  "maintainer": "linknlink <https://github.com/linknlink>",
+  "description": "Docker container description",
+  "arch": ["aarch64", "amd64", "armv7"]
 }
+```
+
+**注意**：可以通过 `--arch` 参数在构建时指定架构，所以此文件不是必需的。
 ```
 
 ### VERSION
@@ -330,6 +335,7 @@ A: 发布脚本会检查 tag 是否已存在。如果冲突，使用不同的版
 
 ## 参考资源
 
-- [Home Assistant Add-on 开发文档](https://developers.home-assistant.io/docs/add-ons)
+- [Docker 官方文档](https://docs.docker.com/)
 - [Docker 多架构构建](https://docs.docker.com/build/building/multi-platform/)
+- [Docker Compose 文档](https://docs.docker.com/compose/)
 - [语义化版本](https://semver.org/)

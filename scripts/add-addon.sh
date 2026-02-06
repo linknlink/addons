@@ -93,15 +93,6 @@ else
     # 创建基本文件
     echo -e "${GREEN}创建基本文件...${NC}"
     
-    # repository.json
-    cat > "$ADDONS_DIR/$ADDON_NAME/repository.json" <<EOF
-{
-  "name": "Home Assistant Add-on: $(echo $ADDON_NAME | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr(\$i,1,1)),\$i)}1')",
-  "url": "https://github.com/linknlink/addons",
-  "maintainer": "linknlink <https://github.com/linknlink>"
-}
-EOF
-
     # VERSION
     echo "0.0.1" > "$ADDONS_DIR/$ADDON_NAME/VERSION"
 
@@ -109,7 +100,7 @@ EOF
     cat > "$ADDONS_DIR/$ADDON_NAME/README.md" <<EOF
 # ${ADDON_NAME}
 
-Home Assistant Add-on 描述
+Docker 容器应用描述，旨在为 Ubuntu Server 系统提供相关能力。
 
 ## 功能
 

@@ -1,6 +1,6 @@
 # {{ADDON_NAME}}
 
-Home Assistant Add-on 描述
+Docker 容器应用描述，旨在为 Ubuntu Server 系统提供相关能力。
 
 ## 功能
 

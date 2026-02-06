@@ -1,12 +1,22 @@
-# LinknLink Home Assistant Add-ons Repository
+# LinknLink Docker Containers Repository
 
-这是一个用于管理多个 Home Assistant Add-ons 的统一仓库。
+这是一个 Docker 容器应用集合，旨在为 Ubuntu Server 系统提供相关能力。
 
-## 📦 可用 Add-ons
+## 📦 可用容器应用
+
+### Network Manager
+
+WiFi 网络管理容器，通过 NetworkManager 提供 WiFi 连接、配置和管理功能。
+
+**主要特性：**
+- WiFi 网络扫描和连接
+- DHCP 和静态 IP 配置
+- 网络连接状态监控
+- 支持多种架构（aarch64, amd64, armv7）
 
 ### LinknLink Remote
 
-Home Assistant add-on，通过 LinknLink 平台提供远程访问功能。
+远程访问容器，通过 LinknLink 平台提供远程访问功能。
 
 **主要特性：**
 - 零配置远程访问（仅需账户凭证）
@@ -14,58 +24,54 @@ Home Assistant add-on，通过 LinknLink 平台提供远程访问功能。
 - 安全加密隧道
 - 支持多种架构（aarch64, amd64, armv7）
 
-[![Install Add-on][addon-badge]][addon]
+## 🚀 使用
 
-[addon-badge]: https://my.home-assistant.io/badges/supervisor_addon.svg
-[addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=a4a84f10_frpc
+### Docker Compose 方式
 
-## 🚀 安装
+```yaml
+services:
+  network-manager:
+    image: ghcr.io/linknlink/network-manager:latest
+    container_name: network-manager
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+```
 
-### 方式一：一键添加
+### Docker 命令行方式
 
-点击下面的按钮将此仓库添加到 Home Assistant：
-
-[![Add Repository to Home Assistant][add-repo-badge]][add-repo]
-
-[add-repo-badge]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
-[add-repo]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Flinknlink%2Faddons
-
-### 方式二：手动添加
-
-1. 打开 Home Assistant
-2. 导航到 **设置** → **加载项** → **加载项商店**
-3. 点击右上角菜单图标 (⋮) → **仓库**
-4. 添加仓库 URL: `https://github.com/linknlink/addons`
-5. 点击 **添加**
-
-### 安装 Add-on
-
-添加仓库后，在商店中找到所需的 addon 并点击 **安装**。
+```bash
+docker run -d \
+  --name network-manager \
+  --network host \
+  --privileged \
+  ghcr.io/linknlink/network-manager:latest
+```
 
 ## 📚 文档
 
 - [设计文档](docs/DESIGN.md) - 仓库框架设计说明
-- [Addon 开发指南](docs/ADDON_GUIDE.md) - 如何开发和添加新的 addon
+- [容器开发指南](docs/ADDON_GUIDE.md) - 如何开发和添加新的容器应用
 - [贡献指南](docs/CONTRIBUTING.md) - 如何参与贡献
 
 ## 🛠️ 开发
 
-### 添加新 Addon
+### 添加新容器应用
 
 ```bash
-./scripts/add-addon.sh <addon-name>
+./scripts/add-addon.sh <container-name>
 ```
 
-### 构建 Addon
+### 构建容器
 
 ```bash
-./scripts/build-addon.sh <addon-name>
+./scripts/build-addon.sh <container-name>
 ```
 
-### 发布 Addon
+### 发布容器
 
 ```bash
-./scripts/release-addon.sh <addon-name> patch
+./scripts/release-addon.sh <container-name> patch
 ```
 
 更多信息请参考 [设计文档](docs/DESIGN.md)。
@@ -83,8 +89,8 @@ Home Assistant add-on，通过 LinknLink 平台提供远程访问功能。
 如有问题或建议：
 
 - 通过 [GitHub Issues](https://github.com/linknlink/addons/issues) 提交反馈
-- 查看各 addon 的文档和更新日志
+- 查看各容器应用的文档和更新日志
 
 ---
 
-**注意：** 这些 addon 需要 LinknLink IoT 平台才能正常工作。
+**注意：** 这些容器应用主要针对 Ubuntu Server 系统（特别是鲁班猫设备）设计。

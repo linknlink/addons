@@ -1,17 +1,18 @@
-# Addons 管理仓库框架设计文档
+# Docker 容器应用管理仓库框架设计文档
 
 ## 1. 概述
 
-本文档描述了一个用于管理多个 Home Assistant Add-ons 的仓库框架设计。该框架支持统一管理、构建和发布多个 addon，同时保持每个 addon 的独立性和可维护性。
+本文档描述了一个用于管理多个 Docker 容器应用的仓库框架设计。该框架支持统一管理、构建和发布多个容器应用，同时保持每个容器应用的独立性和可维护性。这些容器应用旨在为 Ubuntu Server 系统提供相关能力。
 
 ## 2. 设计目标
 
-- **统一管理**: 在一个仓库中管理多个 addon
-- **标准化结构**: 每个 addon 遵循统一的结构和规范
+- **统一管理**: 在一个仓库中管理多个 Docker 容器应用
+- **标准化结构**: 每个容器应用遵循统一的结构和规范
 - **自动化构建**: 支持 CI/CD 自动化构建和发布
-- **易于扩展**: 方便添加新的 addon
-- **版本管理**: 每个 addon 独立版本管理
+- **易于扩展**: 方便添加新的容器应用
+- **版本管理**: 每个容器应用独立版本管理
 - **文档完善**: 提供清晰的文档和使用指南
+- **Ubuntu Server 优化**: 针对 Ubuntu Server 系统（特别是鲁班猫设备）优化
 
 ## 3. 仓库结构
 
@@ -23,7 +24,7 @@ addons/
 │       └── release.yml         # 发布工作流
 ├── addons/                     # Addon 目录
 │   ├── linknlink-remote/       # 示例 addon
-│   │   ├── repository.json     # Addon 元数据
+│   │   ├── repository.json     # Addon 元数据（可选）
 │   │   ├── config.json         # Addon 配置（可选）
 │   │   ├── VERSION             # Addon 版本号
 │   │   ├── README.md           # Addon 说明文档
@@ -61,9 +62,10 @@ addons/
 
 ```json
 {
-  "name": "LinknLink Home Assistant Add-ons",
+  "name": "LinknLink Docker Containers",
   "url": "https://github.com/linknlink/addons",
-  "maintainer": "linknlink <https://github.com/linknlink>"
+  "maintainer": "linknlink <https://github.com/linknlink>",
+  "description": "Docker container applications collection for Ubuntu Server"
 }
 ```
 
@@ -71,20 +73,21 @@ addons/
 
 每个 addon 位于 `addons/` 目录下，包含以下核心文件：
 
-#### 4.2.1 repository.json
+#### 4.2.1 repository.json（可选）
 
-Addon 的元数据文件，定义 addon 的基本信息：
+可选的元数据文件，主要用于指定支持的架构。如果不提供，构建时会使用默认架构（amd64, aarch64, armv7）或通过 `--arch` 参数指定。
 
 ```json
 {
-  "name": "Home Assistant Add-on: LinknLink Remote",
+  "name": "LinknLink Remote",
   "url": "https://github.com/linknlink/addons",
   "maintainer": "linknlink <https://github.com/linknlink>",
-  "slug": "linknlink_remote",
-  "description": "Enable remote access through the LinknLink platform",
+  "description": "Docker container for remote access through the LinknLink platform",
   "arch": ["aarch64", "amd64", "armv7"]
 }
 ```
+
+**注意**：此文件不是必需的，可以通过 `--arch` 参数在构建时指定架构。
 
 #### 4.2.2 config.json
 
@@ -267,12 +270,13 @@ addons/linknlink-remote/VERSION
 
 ## 9. 最佳实践
 
-### 9.1 Addon 开发
+### 9.1 容器应用开发
 
-- 遵循 Home Assistant Add-on 规范
+- 遵循 Docker 容器最佳实践
 - 保持代码模块化和可维护性
 - 提供清晰的文档和示例
 - 编写测试用例（如适用）
+- 针对 Ubuntu Server 系统优化
 
 ### 9.2 版本管理
 
