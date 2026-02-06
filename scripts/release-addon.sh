@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 发布 addon 的脚本
-# 使用方法: ./scripts/release-addon.sh <addon-name> [patch|minor|major] [--commit] [--push]
+# 使用方法: ./scripts/release-addon.sh <addon-name> [patch|minor|major] [--commit] [--push] [--trigger]
 
 set -e
 
@@ -28,11 +28,13 @@ show_help() {
     echo "选项:"
     echo "  --commit    - 提交更改到 git"
     echo "  --push      - 推送到远程仓库（包括 tag）"
+    echo "  --trigger   - 触发 release workflow (需要 GITHUB_TOKEN)"
     echo "  --help, -h  - 显示此帮助信息"
     echo ""
     echo "示例:"
     echo "  $0 linknlink-remote patch"
     echo "  $0 linknlink-remote patch --commit --push"
+    echo "  $0 linknlink-remote patch --commit --push --trigger"
     echo "  $0 linknlink-remote 1.0.5 --commit --push"
 }
 
@@ -48,6 +50,7 @@ shift
 VERSION_TYPE="patch"
 COMMIT=false
 PUSH=false
+TRIGGER=false
 
 # 解析参数
 while [[ $# -gt 0 ]]; do
@@ -62,6 +65,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --push)
             PUSH=true
+            shift
+            ;;
+        --trigger)
+            TRIGGER=true
             shift
             ;;
         *)
@@ -226,6 +233,55 @@ if [ "$PUSH" = true ]; then
         fi
 
         echo -e "${GREEN}✓ 已推送到远程仓库${NC}"
+    fi
+fi
+
+# 获取 GitHub Token
+get_github_token() {
+    local token="${GITHUB_TOKEN}"
+    local token_file=$(find "$PROJECT_ROOT" -maxdepth 1 -name "*.token" -type f 2>/dev/null | head -n1)
+    if [ -n "$token_file" ] && [ -f "$token_file" ]; then
+        local file_token=$(cat "$token_file" | tr -d '[:space:]')
+        if [ -n "$file_token" ]; then
+            token="$file_token"
+            echo -e "${YELLOW}从文件读取 token: $(basename "$token_file")${NC}" >&2
+        fi
+    fi
+    echo "$token"
+}
+
+# 触发 release workflow (如果设置了 TRIGGER)
+# 注意: 现在 CI 是通过 tag 触发的，所以这步可能不是必需的，除非有特定的 workflow_dispatch
+if [ "$TRIGGER" = true ]; then
+    echo ""
+    echo -e "${GREEN}触发 release workflow...${NC}"
+    
+    REPO="linknlink/addons"
+    TOKEN=$(get_github_token)
+    if [ -z "$TOKEN" ]; then
+        echo -e "${RED}错误: GITHUB_TOKEN 未设置${NC}"
+        # 忽略错误，因为我们已经通过 tag 触发了构建
+        echo -e "${YELLOW}跳过手动触发 (CI 已通过 tag 推送触发)${NC}"
+    else
+        response=$(curl -s -w "\n%{http_code}" -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token $TOKEN" \
+          "https://api.github.com/repos/$REPO/dispatches" \
+          -d "{
+            \"event_type\": \"release\",
+            \"client_payload\": {
+              \"addon_name\": \"$ADDON_NAME\",
+              \"version\": \"$NEW_VERSION\"
+            }
+          }")
+        
+        http_code=$(echo "$response" | tail -n1)
+        if [ "$http_code" = "204" ]; then
+            echo -e "${GREEN}✓ Workflow 触发成功!${NC}"
+        else
+            echo -e "${RED}✗ 触发失败 (HTTP $http_code)${NC}"
+            # 不退出，因为 tag 可能已经触发了构建
+        fi
     fi
 fi
 
