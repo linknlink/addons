@@ -152,14 +152,6 @@ if [ -d "$ADDON_DIR/common" ]; then
     echo "  复制: common/"
 fi
 
-# 复制其他可能需要的文件和目录
-for item in "scripts" "docs"; do
-    if [ -d "$ADDON_DIR/$item" ]; then
-        cp -r "$ADDON_DIR/$item" "$TEMPLATE_DIR/"
-        echo "  复制: $item/"
-    fi
-done
-
 # 复制其他可能需要的文件（不包括 README.md，稍后单独处理）
 for file in "CHANGELOG.md" "requirements.txt" "repository.json"; do
     if [ -f "$ADDON_DIR/$file" ]; then
@@ -179,6 +171,7 @@ __pycache__
 *.log
 .DS_Store
 TEMPLATE_INFO.md
+README.md
 EOF
 
 # 复制或创建 README.md（如果不存在）
@@ -220,6 +213,51 @@ else
     echo -e "${YELLOW}提示: 请添加 icon.png 文件到 ${TEMPLATE_DIR}${NC}"
 fi
 
+# 生成 DOCS.md 使用说明文档
+echo -e "${GREEN}生成 DOCS.md 使用说明文档...${NC}"
+if [ -f "$ADDON_DIR/README.md" ]; then
+    # 从 README.md 复制内容作为 DOCS.md
+    cp "$ADDON_DIR/README.md" "$TEMPLATE_DIR/DOCS.md"
+    echo "  从 README.md 生成 DOCS.md"
+else
+    # 如果 README.md 不存在，创建基本的 DOCS.md
+    cat > "$TEMPLATE_DIR/DOCS.md" <<EOF
+# ${ADDON_DISPLAY_NAME} 使用说明
+
+${ADDON_DESCRIPTION:-Docker 容器应用描述，旨在为 Ubuntu Server 系统提供相关能力。}
+
+## 快速开始
+
+### 使用 Docker Compose
+
+1. 编辑 \`docker-compose.yml\`，配置必要的环境变量和挂载卷
+2. 启动容器：
+   \`\`\`bash
+   docker-compose up -d
+   \`\`\`
+
+### 使用 Docker 命令
+
+\`\`\`bash
+docker run -d \\
+  --name ${ADDON_NAME} \\
+  --restart unless-stopped \\
+  <镜像名称>:<版本>
+\`\`\`
+
+## 配置说明
+
+请根据实际需求修改 \`docker-compose.yml\` 中的配置项。
+
+## 注意事项
+
+- 确保容器有足够的权限访问所需资源
+- 检查端口映射是否正确
+- 验证挂载卷路径是否存在
+EOF
+    echo "  创建默认 DOCS.md"
+fi
+
 # 创建说明文件
 cat > "$TEMPLATE_DIR/TEMPLATE_INFO.md" <<EOF
 # Template 生成信息
@@ -235,7 +273,8 @@ cat > "$TEMPLATE_DIR/TEMPLATE_INFO.md" <<EOF
 - \`docker-compose.yml\`: Docker Compose 配置
 - \`common/\`: Addon 文件目录（包含 Dockerfile 和 rootfs/）
 - \`.tarignore\`: 打包时排除的文件列表
-- \`README.md\`: 说明文档
+- \`DOCS.md\`: 使用说明文档（从 README.md 生成）
+- \`README.md\`: 说明文档（上传时会被排除）
 
 ## 使用前检查清单
 
@@ -243,7 +282,7 @@ cat > "$TEMPLATE_DIR/TEMPLATE_INFO.md" <<EOF
 - [ ] 确认 \`docker-compose.yml\` 配置正确
 - [ ] 添加或更新 \`icon.png\` 图标文件
 - [ ] 检查 \`.tarignore\` 是否需要调整
-- [ ] 验证 addon_files/ 目录中的文件是否完整
+- [ ] 检查 \`DOCS.md\` 使用说明是否完整
 EOF
 
 echo ""
