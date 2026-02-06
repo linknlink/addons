@@ -1,9 +1,7 @@
-icon.png
-upload_config.json
 .git
 __pycache__
 *.pyc
 *.log
 .DS_Store
 TEMPLATE_INFO.md
-README.md
+common/

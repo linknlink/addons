@@ -1,235 +1,147 @@
 # Network Manager 使用说明
 
-本文档详细介绍如何使用 Network Manager Addon。
-
-## 关于 Haddons
-
-本 Addon 专为 **Haddons** 服务设计。Haddons 是一个参照 Home Assistant Add-on 管理实现的一套 Addon 管理系统，允许用户通过 Web 界面浏览、安装、配置、监控和管理基于 Docker Compose 的应用程序。
+本文档详细介绍如何在生产环境中使用 Network Manager Addon。此文档会显示在 Haddons Web 界面的"文档"标签页中，面向最终用户（ToC 产品用户）。
 
 ## 快速开始
 
-### 使用 Haddons 服务
+### 安装和启动
 
-1. 确保 Haddons 服务正在运行
-2. 将本 Addon 目录复制到 Haddons 的 `addons/` 目录
-3. 在 Haddons Web 界面中刷新 Addon 列表
-4. 点击"安装"按钮安装 Addon
-5. 在"配置"标签页中配置 WiFi 连接信息（可选）：
+1. 在 Haddons Web 界面中找到 Network Manager
+2. 点击"安装"按钮安装 Addon
+3. 安装完成后，在"配置"标签页中配置必要的选项（如需要）
+4. 点击"保存"保存配置
+5. 点击"启动"按钮启动 Addon
 
-   - `initial_wifi_ssid`: WiFi 网络名称
-   - `initial_wifi_password`: WiFi 密码
-   - `default_ip_method`: IP 配置方法（`dhcp` 或 `static`）
-   - `wifi_scan_interval`: WiFi 扫描间隔（秒）
-   - `auto_reconnect`: 是否自动重连
-   - `log_level`: 日志级别
+### 首次配置
 
-6. 点击"保存"保存配置
-7. 点击"启动"按钮启动 Addon
+首次使用时，建议在"配置"标签页中设置以下选项：
 
-### 使用 Docker Compose（开发/测试）
-
-编辑 `docker-compose.yml`，配置必要的环境变量和挂载卷：
-
-```yaml
-environment:
-  - INITIAL_WIFI_SSID=YourWiFiName
-  - INITIAL_WIFI_PASSWORD=YourPassword
-  - DEFAULT_IP_METHOD=dhcp
-  - WIFI_SCAN_INTERVAL=30
-  - AUTO_RECONNECT=true
-  - LOG_LEVEL=info
-```
-
-启动容器：
-
-```bash
-docker-compose up -d
-```
-
-### 使用 Docker 命令
-
-```bash
-docker run -d \
-  --name network_manager \
-  --network host \
-  --privileged \
-  --restart unless-stopped \
-  -e INITIAL_WIFI_SSID=YourWiFiName \
-  -e INITIAL_WIFI_PASSWORD=YourPassword \
-  -e DEFAULT_IP_METHOD=dhcp \
-  -e AUTO_RECONNECT=true \
-  -e LOG_LEVEL=info \
-  ghcr.io/linknlink/network_manager:0.0.3
-```
+- **配置项 1**：说明该配置项的作用和推荐值
+- **配置项 2**：说明该配置项的作用和推荐值
+- **配置项 3**：说明该配置项的作用和推荐值
 
 ## 配置说明
 
-请根据实际需求修改 `config.json` 中的配置项和 `docker-compose.yml` 中的环境变量。
+### 配置选项说明
 
-### config.json 配置
+在 Haddons Web 界面的"配置"标签页中，您可以配置以下选项：
 
-`config.json` 是 Haddons 服务必需的配置文件，定义了 Addon 的元数据、配置选项和 Schema。
+| 配置项 | 类型 | 说明 | 默认值 | 必填 |
+|--------|------|------|--------|------|
+| `option1` | string | 配置项 1 的说明 | `default1` | 否 |
+| `option2` | number | 配置项 2 的说明 | `10` | 否 |
+| `option3` | boolean | 配置项 3 的说明 | `true` | 否 |
 
-**主要配置选项**：
+### 配置示例
 
-| 选项名 | 类型 | 说明 | 默认值 |
-| ------ | ---- | ---- | ------ |
-| `wifi_scan_interval` | int | WiFi 扫描间隔（秒） | `30` |
-| `auto_reconnect` | bool | 是否自动重连 | `true` |
-| `default_ip_method` | str | 默认 IP 配置方法 | `dhcp` |
-| `log_level` | str | 日志级别 | `info` |
-| `initial_wifi_ssid` | str | 初始连接的 WiFi 名称 | - |
-| `initial_wifi_password` | str | WiFi 密码 | - |
-| `initial_wifi_ip_address` | str | 静态 IP 地址（CIDR 格式） | - |
-| `initial_wifi_gateway` | str | 网关地址 | - |
-| `initial_wifi_dns` | str | DNS 服务器 | - |
-
-**静态 IP 配置示例**：
-
-在 Haddons Web 界面的"配置"标签页中设置：
+**示例 1：基本配置**
 
 ```json
 {
-  "initial_wifi_ssid": "MyWiFi",
-  "initial_wifi_password": "mypassword",
-  "default_ip_method": "static",
-  "initial_wifi_ip_address": "192.168.1.100/24",
-  "initial_wifi_gateway": "192.168.1.1",
-  "initial_wifi_dns": "8.8.8.8 8.8.4.4"
+  "option1": "value1",
+  "option2": 20,
+  "option3": true
 }
 ```
 
-### docker-compose.yml 配置
+**示例 2：高级配置**
 
-`docker-compose.yml` 定义了容器的编排配置，包括镜像、环境变量、挂载卷等。
-
-**重要配置**：
-
-- `network_mode: host`：必须使用 host 网络模式才能访问主机的网络设备
-- `privileged: true`：需要特权模式
-- `cap_add: [NET_ADMIN, SYS_ADMIN]`：需要网络和管理权限
-
-**环境变量映射**：
-
-Haddons 服务会将 `config.json` 中的配置项映射为环境变量：
-
-- `wifi_scan_interval` → `WIFI_SCAN_INTERVAL`
-- `auto_reconnect` → `AUTO_RECONNECT`
-- `default_ip_method` → `DEFAULT_IP_METHOD`
-- `log_level` → `LOG_LEVEL`
-- `initial_wifi_ssid` → `INITIAL_WIFI_SSID`
-- `initial_wifi_password` → `INITIAL_WIFI_PASSWORD`
-- `initial_wifi_ip_address` → `INITIAL_WIFI_IP_ADDRESS`
-- `initial_wifi_gateway` → `INITIAL_WIFI_GATEWAY`
-- `initial_wifi_dns` → `INITIAL_WIFI_DNS`
-
-## 使用
-
-### 在容器内执行命令
-
-进入容器：
-
-```bash
-docker exec -it network_manager bash
+```json
+{
+  "option1": "value1",
+  "option2": 30,
+  "option3": false
+}
 ```
 
-### 扫描 WiFi 网络
+## 使用指南
 
-```bash
-/app/network-manager.sh scan
-```
+### 基本操作
 
-### 连接 WiFi（DHCP）
+#### 查看状态
 
-```bash
-/app/network-manager.sh connect \
-  --ssid "MyWiFi" \
-  --password "mypassword" \
-  --ip-method dhcp
-```
+在 Haddons Web 界面的"信息"标签页中，您可以查看 Addon 的运行状态、版本信息等。
 
-### 连接 WiFi（静态 IP）
+#### 查看日志
 
-```bash
-/app/network-manager.sh connect \
-  --ssid "MyWiFi" \
-  --password "mypassword" \
-  --ip-method static \
-  --ip-address "192.168.1.100/24" \
-  --gateway "192.168.1.1" \
-  --dns "8.8.8.8 8.8.4.4"
-```
+在 Haddons Web 界面的"日志"标签页中，您可以实时查看 Addon 的运行日志，帮助排查问题。
 
-### 查看网络状态
+#### 重启服务
 
-```bash
-/app/network-manager.sh status
-```
+如果需要重启 Addon，可以在"信息"标签页中点击"重启"按钮。
 
-### 列出所有连接
+### 常见使用场景
 
-```bash
-/app/network-manager.sh list
-```
+#### 场景 1：使用场景描述
 
-### 断开连接
+1. 步骤 1：描述操作步骤
+2. 步骤 2：描述操作步骤
+3. 步骤 3：描述操作步骤
 
-```bash
-/app/network-manager.sh disconnect [连接名称]
-```
+#### 场景 2：使用场景描述
 
-### 配置 IP 地址
-
-```bash
-# 切换到 DHCP
-/app/network-manager.sh configure "MyWiFi" dhcp
-
-# 切换到静态 IP
-/app/network-manager.sh configure "MyWiFi" static \
-  192.168.1.100/24 \
-  192.168.1.1 \
-  "8.8.8.8 8.8.4.4"
-```
-
-### 删除连接
-
-```bash
-/app/network-manager.sh delete "MyWiFi"
-```
+1. 步骤 1：描述操作步骤
+2. 步骤 2：描述操作步骤
 
 ## 注意事项
 
-- **网络模式**：容器必须使用 `host` 网络模式才能访问主机的网络设备
-- **权限要求**：需要 `privileged` 模式和 `NET_ADMIN`、`SYS_ADMIN` capabilities
-- **NetworkManager 服务**：确保主机上的 NetworkManager 服务正在运行
-- **WiFi 设备**：确保 WiFi 设备可用且未被其他服务占用
-- **config.json 格式**：确保 `config.json` 格式正确，否则 Haddons 服务无法识别
+### 使用前检查
+
+- ✅ 确保系统满足 Addon 的运行要求
+- ✅ 检查必要的资源（端口、存储空间等）是否可用
+- ✅ 确认网络连接正常（如需要）
+
+### 重要提醒
+
+- **权限要求**：说明 Addon 需要的特殊权限
+- **资源占用**：说明 Addon 的资源占用情况
+- **数据安全**：说明数据存储和备份相关注意事项
 
 ## 故障排查
 
-### 检查 NetworkManager 服务
+### 常见问题
 
-```bash
-sudo systemctl status NetworkManager
-```
+#### 问题 1：Addon 无法启动
 
-### 查看容器日志
+**可能原因**：
+- 配置错误
+- 资源不足
+- 端口冲突
 
-在 Haddons Web 界面的"日志"标签页查看，或使用命令：
+**解决方法**：
+1. 检查"配置"标签页中的配置是否正确
+2. 查看"日志"标签页中的错误信息
+3. 确认系统资源是否充足
 
-```bash
-docker logs network_manager
-```
+#### 问题 2：功能异常
 
-### 检查 WiFi 设备
+**可能原因**：
+- 配置不正确
+- 网络问题
+- 依赖服务未启动
 
-```bash
-docker exec network_manager nmcli device status
-```
+**解决方法**：
+1. 检查相关配置项
+2. 查看日志获取详细错误信息
+3. 确认依赖服务状态
 
-### 查看详细日志
+### 获取帮助
 
-在 Haddons Web 界面的"配置"标签页中设置 `log_level` 为 `debug`，或在环境变量中设置 `LOG_LEVEL=debug`。
+如果遇到问题无法解决，可以：
+
+1. 查看"日志"标签页获取详细错误信息
+2. 检查配置是否正确
+3. 联系技术支持
+
+## 更新和维护
+
+### 更新 Addon
+
+当有新版本可用时，Haddons 会在"信息"标签页中提示更新。点击"更新"按钮即可升级到最新版本。
+
+### 备份配置
+
+建议定期备份"配置"标签页中的配置信息，以便在需要时快速恢复。
 
 ## 许可证
 
