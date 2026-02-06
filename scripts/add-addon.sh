@@ -92,25 +92,56 @@ mkdir -p "$ADDONS_DIR/$ADDON_NAME/scripts"
 # 从模板创建文件
 if [ "$USE_TEMPLATE" = true ] && [ -d "$TEMPLATE_DIR" ]; then
     echo -e "${GREEN}从模板复制文件...${NC}"
-    cp -r "$TEMPLATE_DIR"/* "$ADDONS_DIR/$ADDON_NAME/" 2>/dev/null || true
-    # 替换模板变量
-    find "$ADDONS_DIR/$ADDON_NAME" -type f -exec sed -i "s/{{ADDON_NAME}}/$ADDON_NAME/g" {} \;
-    find "$ADDONS_DIR/$ADDON_NAME" -type f -exec sed -i "s/{{ADDON_SLUG}}/${ADDON_NAME//-/_}/g" {} \;
     
-    # 如果模板中没有 config.json，创建一个
+    # 复制模板文件（排除 template/ 目录，因为它只用于生成 haddons template）
+    rsync -av --exclude='template/' "$TEMPLATE_DIR/" "$ADDONS_DIR/$ADDON_NAME/" 2>/dev/null || {
+        # 如果 rsync 不可用，使用 cp 并手动排除
+        cp -r "$TEMPLATE_DIR"/* "$ADDONS_DIR/$ADDON_NAME/" 2>/dev/null || true
+        rm -rf "$ADDONS_DIR/$ADDON_NAME/template" 2>/dev/null || true
+    }
+    
+    # 替换模板变量
+    ADDON_SLUG="${ADDON_NAME//-/_}"
+    ADDON_DISPLAY_NAME=$(echo "$ADDON_NAME" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
+    
+    echo -e "${GREEN}替换模板变量...${NC}"
+    echo "  ADDON_NAME: ${ADDON_DISPLAY_NAME}"
+    echo "  ADDON_SLUG: ${ADDON_SLUG}"
+    
+    # 替换所有模板文件中的变量（排除二进制文件）
+    find "$ADDONS_DIR/$ADDON_NAME" -type f \( \
+        -name "*.md" -o \
+        -name "*.json" -o \
+        -name "*.yml" -o \
+        -name "*.yaml" -o \
+        -name "*.sh" -o \
+        -name "Dockerfile" -o \
+        -name "VERSION" \
+    \) -exec sed -i "s/{{ADDON_NAME}}/$ADDON_DISPLAY_NAME/g" {} \; 2>/dev/null || true
+    
+    find "$ADDONS_DIR/$ADDON_NAME" -type f \( \
+        -name "*.md" -o \
+        -name "*.json" -o \
+        -name "*.yml" -o \
+        -name "*.yaml" -o \
+        -name "*.sh" -o \
+        -name "Dockerfile" -o \
+        -name "VERSION" \
+    \) -exec sed -i "s/{{ADDON_SLUG}}/$ADDON_SLUG/g" {} \; 2>/dev/null || true
+    
+    # 确保 config.json 存在且格式正确
     if [ ! -f "$ADDONS_DIR/$ADDON_NAME/config.json" ]; then
         echo -e "${GREEN}创建 config.json（Haddons 必需）...${NC}"
-        ADDON_SLUG="${ADDON_NAME//-/_}"
         VERSION="0.0.1"
         if [ -f "$ADDONS_DIR/$ADDON_NAME/VERSION" ]; then
             VERSION=$(cat "$ADDONS_DIR/$ADDON_NAME/VERSION" | tr -d '[:space:]')
         fi
         cat > "$ADDONS_DIR/$ADDON_NAME/config.json" <<EOF
 {
-  "name": "$(echo $ADDON_NAME | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr(\$i,1,1)),\$i)}1')",
+  "name": "${ADDON_DISPLAY_NAME}",
   "version": "${VERSION}",
   "slug": "${ADDON_SLUG}",
-  "description": "Haddons Addon 描述，旨在为 Ubuntu Server 系统提供相关能力。",
+  "description": "${ADDON_DISPLAY_NAME} 旨在为 Ubuntu Server 系统提供相关能力。",
   "arch": ["aarch64", "amd64", "armv7"],
   "startup": "services",
   "boot": "auto",
@@ -118,6 +149,21 @@ if [ "$USE_TEMPLATE" = true ] && [ -d "$TEMPLATE_DIR" ]; then
   "schema": {}
 }
 EOF
+    else
+        echo -e "${GREEN}检查 config.json...${NC}"
+        # 验证 JSON 格式
+        if command -v jq &> /dev/null; then
+            if jq empty "$ADDONS_DIR/$ADDON_NAME/config.json" 2>/dev/null; then
+                echo "  ✓ config.json 格式正确"
+            else
+                echo -e "${YELLOW}  ⚠ config.json 格式可能有问题，请检查${NC}"
+            fi
+        fi
+    fi
+    
+    # 确保 docker-entrypoint.sh 有执行权限
+    if [ -f "$ADDONS_DIR/$ADDON_NAME/common/rootfs/app/docker-entrypoint.sh" ]; then
+        chmod +x "$ADDONS_DIR/$ADDON_NAME/common/rootfs/app/docker-entrypoint.sh"
     fi
 else
     # 创建基本文件
@@ -190,6 +236,7 @@ ENTRYPOINT [ "/bin/bash", "/app/docker-entrypoint.sh" ]
 EOF
 
     # docker-entrypoint.sh
+    ADDON_SLUG="${ADDON_NAME//-/_}"
     cat > "$ADDONS_DIR/$ADDON_NAME/common/rootfs/app/docker-entrypoint.sh" <<EOF
 #!/bin/bash
 set -e
@@ -225,6 +272,7 @@ if [ "$GENERATE_TEMPLATE" = true ]; then
     if [ -f "$GENERATE_SCRIPT" ]; then
         "$GENERATE_SCRIPT" "$ADDON_NAME" || {
             echo -e "${YELLOW}警告: Template 生成失败，但 addon 已创建${NC}"
+            echo "  可以稍后运行: ./scripts/generate-template-from-addon.sh $ADDON_NAME"
         }
     else
         echo -e "${YELLOW}警告: 找不到 generate-template-from-addon.sh 脚本${NC}"
@@ -232,12 +280,18 @@ if [ "$GENERATE_TEMPLATE" = true ]; then
     echo ""
 fi
 
-echo "下一步:"
-echo "  1. 编辑 $ADDONS_DIR/$ADDON_NAME/ 目录下的文件"
-echo "  2. 配置 addon 的功能和设置"
-echo "  3. 运行 ./scripts/validate-addon.sh $ADDON_NAME 验证结构"
-echo "  4. 运行 ./scripts/build-addon.sh $ADDON_NAME 测试构建"
+echo -e "${BLUE}下一步:${NC}"
+echo "  1. 编辑 $ADDONS_DIR/$ADDON_NAME/README.md - 描述 addon 的功能和技术架构"
+echo "  2. 编辑 $ADDONS_DIR/$ADDON_NAME/config.json - 配置 addon 的元数据和选项"
+echo "  3. 编辑 $ADDONS_DIR/$ADDON_NAME/common/Dockerfile - 配置 Docker 构建"
+echo "  4. 编辑 $ADDONS_DIR/$ADDON_NAME/common/rootfs/app/ - 添加应用代码"
+echo "  5. 运行 ./scripts/validate-addon.sh $ADDON_NAME 验证结构"
+echo "  6. 运行 ./scripts/build-addon.sh $ADDON_NAME 测试构建"
 if [ "$GENERATE_TEMPLATE" != true ]; then
-    echo "  5. 运行 ./scripts/generate-template-from-addon.sh $ADDON_NAME 生成上传用的 template"
+    echo "  7. 运行 ./scripts/generate-template-from-addon.sh $ADDON_NAME 生成上传用的 template"
 fi
+echo ""
+echo -e "${YELLOW}提示:${NC}"
+echo "  - README.md 是 addon 级文档，面向开发者，描述技术实现"
+echo "  - 生成 template 后，会创建用户文档（template/README.md 和 DOCS.md）"
 echo ""

@@ -87,7 +87,7 @@ for addon_dir in "$ADDONS_DIR"/*; do
         
         # 调用生成脚本
         if [ -n "$OUTPUT_DIR" ]; then
-            if "$GENERATE_SCRIPT" "$addon_name" --output-dir "$OUTPUT_DIR" > /dev/null 2>&1; then
+            if "$GENERATE_SCRIPT" "$addon_name" --output-dir "$OUTPUT_DIR" 2>&1 | grep -q "Template 生成成功"; then
                 echo -e "${GREEN}  ✓ ${addon_name} template 生成成功${NC}"
                 SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
             else
@@ -96,7 +96,7 @@ for addon_dir in "$ADDONS_DIR"/*; do
                 FAILED_ADDONS+=("$addon_name")
             fi
         else
-            if "$GENERATE_SCRIPT" "$addon_name" > /dev/null 2>&1; then
+            if "$GENERATE_SCRIPT" "$addon_name" 2>&1 | grep -q "Template 生成成功"; then
                 echo -e "${GREEN}  ✓ ${addon_name} template 生成成功${NC}"
                 SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
             else

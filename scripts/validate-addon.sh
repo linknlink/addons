@@ -142,20 +142,19 @@ echo ""
 check_file "$ADDON_DIR/VERSION" true
 check_file "$ADDON_DIR/config.json" true
 check_file "$ADDON_DIR/docker-compose.yml" true
+
+# 推荐文件（README.md 是 addon 级文档，面向开发者）
 check_file "$ADDON_DIR/README.md" false
 
 # 可选文件（用于元数据和架构配置）
 check_file "$ADDON_DIR/repository.json" false
+check_file "$ADDON_DIR/requirements.txt" false
+check_file "$ADDON_DIR/CHANGELOG.md" false
 
 # 必需目录
 check_dir "$ADDON_DIR/common" true
 check_file "$ADDON_DIR/common/Dockerfile" true
 check_dir "$ADDON_DIR/common/rootfs" true
-
-# 可选文件
-check_file "$ADDON_DIR/docker-compose.yml" false
-check_file "$ADDON_DIR/requirements.txt" false
-check_file "$ADDON_DIR/CHANGELOG.md" false
 
 echo ""
 echo "验证 JSON 文件..."
@@ -189,6 +188,76 @@ if [ -f "$ADDON_DIR/common/Dockerfile" ]; then
     else
         echo -e "${RED}✗${NC} Dockerfile 缺少 FROM 指令"
         ERRORS=$((ERRORS + 1))
+    fi
+    
+    # 检查是否有 ARG BUILD_FROM（推荐）
+    if grep -q "ARG BUILD_FROM" "$ADDON_DIR/common/Dockerfile"; then
+        echo -e "${GREEN}✓${NC} Dockerfile 包含 ARG BUILD_FROM（推荐）"
+    else
+        echo -e "${YELLOW}⚠${NC} Dockerfile 未包含 ARG BUILD_FROM（推荐添加以支持多架构）"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+else
+    echo -e "${RED}✗${NC} Dockerfile 不存在"
+    ERRORS=$((ERRORS + 1))
+fi
+
+echo ""
+echo "检查 README.md（addon 级文档）..."
+if [ -f "$ADDON_DIR/README.md" ]; then
+    # 检查是否包含基本章节
+    if grep -q "^## 概述\|^## Overview" "$ADDON_DIR/README.md"; then
+        echo -e "${GREEN}✓${NC} README.md 包含概述部分"
+    else
+        echo -e "${YELLOW}⚠${NC} README.md 缺少概述部分（推荐添加）"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+    
+    if grep -q "^## 主要功能\|^## 功能\|^## Features" "$ADDON_DIR/README.md"; then
+        echo -e "${GREEN}✓${NC} README.md 包含功能说明部分"
+    else
+        echo -e "${YELLOW}⚠${NC} README.md 缺少功能说明部分（推荐添加）"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+    
+    # 检查是否包含模板变量（不应该存在）
+    if grep -q "{{ADDON_NAME}}\|{{ADDON_SLUG}}" "$ADDON_DIR/README.md"; then
+        echo -e "${RED}✗${NC} README.md 包含未替换的模板变量"
+        ERRORS=$((ERRORS + 1))
+    else
+        echo -e "${GREEN}✓${NC} README.md 模板变量已正确替换"
+    fi
+else
+    echo -e "${YELLOW}⚠${NC} README.md 不存在（推荐添加 addon 级文档）"
+    WARNINGS=$((WARNINGS + 1))
+fi
+
+echo ""
+echo "检查 config.json 内容..."
+if [ -f "$ADDON_DIR/config.json" ]; then
+    if command -v jq &> /dev/null; then
+        # 检查必需字段
+        REQUIRED_FIELDS=("name" "version" "slug" "description" "arch" "startup" "boot")
+        for field in "${REQUIRED_FIELDS[@]}"; do
+            if jq -e ".${field}" "$ADDON_DIR/config.json" > /dev/null 2>&1; then
+                echo -e "${GREEN}✓${NC} config.json 包含必需字段: ${field}"
+            else
+                echo -e "${RED}✗${NC} config.json 缺少必需字段: ${field}"
+                ERRORS=$((ERRORS + 1))
+            fi
+        done
+        
+        # 检查 slug 格式（应该是下划线分隔）
+        SLUG=$(jq -r '.slug' "$ADDON_DIR/config.json" 2>/dev/null || echo "")
+        if [[ "$SLUG" =~ ^[a-z0-9_]+$ ]]; then
+            echo -e "${GREEN}✓${NC} config.json slug 格式正确: ${SLUG}"
+        elif [ -n "$SLUG" ]; then
+            echo -e "${YELLOW}⚠${NC} config.json slug 格式建议使用下划线: ${SLUG}"
+            WARNINGS=$((WARNINGS + 1))
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC} 未安装 jq，跳过 config.json 内容检查"
+        WARNINGS=$((WARNINGS + 1))
     fi
 fi
 
