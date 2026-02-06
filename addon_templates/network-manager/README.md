@@ -1,28 +1,33 @@
 # Network Manager
 
-Network Manager 是一个 Haddons Addon，旨在为 Ubuntu Server 系统提供相关能力。
+Network Manager is a Haddons Addon designed to provide relevant capabilities for Ubuntu Server systems.
 
-## 概述
+## Overview
 
-简要描述 Addon 的核心能力和主要用途。此文档会显示在 Haddons Web 界面的 Addon 卡片中，帮助用户快速了解该 Addon 的功能。
+Network Manager provides WiFi network management capabilities for Ubuntu Server systems. The container uses NetworkManager's `nmcli` command-line tool to scan, connect, configure, and manage WiFi connections.
 
-## 核心能力
+## Core Capabilities
 
-- **能力特性 1**：简要描述该能力的作用和价值
-- **能力特性 2**：简要描述该能力的作用和价值
-- **能力特性 3**：简要描述该能力的作用和价值
+- **WiFi Network Management**: Scan, connect, disconnect, and manage WiFi network connections
+- **IP Address Configuration**: Support for DHCP automatic assignment and static IP configuration
+- **Network Status Monitoring**: Real-time monitoring of network connection status and automatic reconnection
 
-## 主要功能
+## Main Features
 
-- ✅ 功能 1：详细描述功能
-- ✅ 功能 2：详细描述功能
-- ✅ 功能 3：详细描述功能
+- ✅ WiFi Network Scanning: Scan and list available WiFi networks
+- ✅ WiFi Connection Management: Connect, disconnect, and reconnect WiFi networks
+- ✅ IP Address Configuration: Support for DHCP automatic assignment and static IP configuration
+- ✅ Network Connection Status Monitoring: Real-time monitoring of network connection status
+- ✅ Network Configuration Persistence: Configurations are automatically saved and persist after restart
+- ✅ Auto Reconnect: Support for automatic reconnection when connection is lost
 
-## 适用场景
+## Use Cases
 
-- 场景 1：描述什么情况下需要使用此 Addon
-- 场景 2：描述什么情况下需要使用此 Addon
+- Need to manage WiFi connections on Ubuntu Server systems
+- Need to configure WiFi networks on devices like LubanCat
+- Need automated network connection management
+- Need support for both DHCP and static IP configuration
 
-## 许可证
+## License
 
 MIT

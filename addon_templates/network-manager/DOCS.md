@@ -1,148 +1,189 @@
-# Network Manager 使用说明
+# Network Manager Usage Guide
 
-本文档详细介绍如何在生产环境中使用 Network Manager Addon。此文档会显示在 Haddons Web 界面的"文档"标签页中，面向最终用户（ToC 产品用户）。
+This document provides detailed instructions on how to use the Network Manager Addon in production environments. This document will be displayed in the "Documentation" tab of the Haddons Web interface, targeting end users (ToC product users).
 
-## 快速开始
+## Quick Start
 
-### 安装和启动
+### Installation and Startup
 
-1. 在 Haddons Web 界面中找到 Network Manager
-2. 点击"安装"按钮安装 Addon
-3. 安装完成后，在"配置"标签页中配置必要的选项（如需要）
-4. 点击"保存"保存配置
-5. 点击"启动"按钮启动 Addon
+1. Find Network Manager in the Haddons Web interface
+2. Click the "Install" button to install the Addon
+3. After installation, configure necessary options in the "Configuration" tab (if needed)
+4. Click "Save" to save the configuration
+5. Click the "Start" button to start the Addon
 
-### 首次配置
+### Initial Configuration
 
-首次使用时，建议在"配置"标签页中设置以下选项：
+When using for the first time, it is recommended to set the following options in the "Configuration" tab:
 
-- **配置项 1**：说明该配置项的作用和推荐值
-- **配置项 2**：说明该配置项的作用和推荐值
-- **配置项 3**：说明该配置项的作用和推荐值
+- **initial_wifi_ssid**: WiFi network name (SSID) for initial connection
+- **initial_wifi_password**: WiFi password for initial connection
+- **default_ip_method**: IP configuration method, `dhcp` (automatic) or `static` (static)
+- **wifi_scan_interval**: WiFi scan interval (seconds), default 30 seconds
+- **auto_reconnect**: Whether to auto reconnect, default `true`
 
-## 配置说明
+## Configuration
 
-### 配置选项说明
+### Configuration Options
 
-在 Haddons Web 界面的"配置"标签页中，您可以配置以下选项：
+In the "Configuration" tab of the Haddons Web interface, you can configure the following options:
 
-| 配置项 | 类型 | 说明 | 默认值 | 必填 |
-|--------|------|------|--------|------|
-| `option1` | string | 配置项 1 的说明 | `default1` | 否 |
-| `option2` | number | 配置项 2 的说明 | `10` | 否 |
-| `option3` | boolean | 配置项 3 的说明 | `true` | 否 |
+| Option | Type | Description | Default | Required |
+|--------|------|-------------|---------|----------|
+| `wifi_scan_interval` | int | WiFi scan interval (seconds) | `30` | No |
+| `auto_reconnect` | bool | Whether to auto reconnect | `true` | No |
+| `default_ip_method` | str | Default IP configuration method (`dhcp` or `static`) | `dhcp` | No |
+| `log_level` | str | Log level (`info`, `debug`, etc.) | `info` | No |
+| `initial_wifi_ssid` | str | Initial WiFi name (SSID) to connect | - | No |
+| `initial_wifi_password` | str | WiFi password | - | No |
+| `initial_wifi_ip_address` | str | Static IP address (CIDR format, e.g., `192.168.1.100/24`) | - | No |
+| `initial_wifi_gateway` | str | Gateway address (required when using static IP) | - | No |
+| `initial_wifi_dns` | str | DNS servers (optional when using static IP, multiple separated by spaces) | - | No |
 
-### 配置示例
+### Configuration Examples
 
-**示例 1：基本配置**
-
-```json
-{
-  "option1": "value1",
-  "option2": 20,
-  "option3": true
-}
-```
-
-**示例 2：高级配置**
+**Example 1: Basic Configuration (DHCP)**
 
 ```json
 {
-  "option1": "value1",
-  "option2": 30,
-  "option3": false
+  "initial_wifi_ssid": "MyWiFi",
+  "initial_wifi_password": "mypassword",
+  "default_ip_method": "dhcp",
+  "wifi_scan_interval": 30,
+  "auto_reconnect": true,
+  "log_level": "info"
 }
 ```
 
-## 使用指南
+**Example 2: Static IP Configuration**
 
-### 基本操作
+```json
+{
+  "initial_wifi_ssid": "MyWiFi",
+  "initial_wifi_password": "mypassword",
+  "default_ip_method": "static",
+  "initial_wifi_ip_address": "192.168.1.100/24",
+  "initial_wifi_gateway": "192.168.1.1",
+  "initial_wifi_dns": "8.8.8.8 8.8.4.4",
+  "wifi_scan_interval": 30,
+  "auto_reconnect": true,
+  "log_level": "info"
+}
+```
 
-#### 查看状态
+## Usage Guide
 
-在 Haddons Web 界面的"信息"标签页中，您可以查看 Addon 的运行状态、版本信息等。
+### Basic Operations
 
-#### 查看日志
+#### View Status
 
-在 Haddons Web 界面的"日志"标签页中，您可以实时查看 Addon 的运行日志，帮助排查问题。
+In the "Information" tab of the Haddons Web interface, you can view the Addon's running status, version information, etc.
 
-#### 重启服务
+#### View Logs
 
-如果需要重启 Addon，可以在"信息"标签页中点击"重启"按钮。
+In the "Logs" tab of the Haddons Web interface, you can view the Addon's running logs in real-time to help troubleshoot issues.
 
-### 常见使用场景
+#### Restart Service
 
-#### 场景 1：使用场景描述
+If you need to restart the Addon, you can click the "Restart" button in the "Information" tab.
 
-1. 步骤 1：描述操作步骤
-2. 步骤 2：描述操作步骤
-3. 步骤 3：描述操作步骤
+### Common Use Cases
 
-#### 场景 2：使用场景描述
+#### Scenario 1: Initial WiFi Connection
 
-1. 步骤 1：描述操作步骤
-2. 步骤 2：描述操作步骤
+1. Set `initial_wifi_ssid` and `initial_wifi_password` in the "Configuration" tab
+2. Set `default_ip_method` to `dhcp` (automatic IP) or `static` (static IP)
+3. If using static IP, also set `initial_wifi_ip_address`, `initial_wifi_gateway`, and `initial_wifi_dns`
+4. Click "Save" to save the configuration
+5. Click "Start" to start the Addon, and it will automatically connect to the specified WiFi network
 
-## 注意事项
+#### Scenario 2: Monitor and Manage WiFi Connections
 
-### 使用前检查
+1. After the Addon starts, it will automatically scan available WiFi networks
+2. You can view scan results and connection status through logs
+3. If the connection is lost, the Addon will automatically reconnect (if `auto_reconnect` is set to `true`)
 
-- ✅ 确保系统满足 Addon 的运行要求
-- ✅ 检查必要的资源（端口、存储空间等）是否可用
-- ✅ 确认网络连接正常（如需要）
+## Important Notes
 
-### 重要提醒
+### Pre-use Checklist
 
-- **权限要求**：说明 Addon 需要的特殊权限
-- **资源占用**：说明 Addon 的资源占用情况
-- **数据安全**：说明数据存储和备份相关注意事项
+- ✅ Ensure the system meets the Addon's requirements (Ubuntu Server, NetworkManager service running)
+- ✅ Check if the WiFi device is available and not occupied by other services
+- ✅ Confirm network connection is normal (if needed)
+- ✅ Ensure the container has sufficient permissions (requires `privileged` mode and `NET_ADMIN`, `SYS_ADMIN` capabilities)
 
-## 故障排查
+### Important Reminders
 
-### 常见问题
+- **Permission Requirements**: The container must use `privileged` mode and `host` network mode to access the host's network devices
+- **Resource Usage**: The Addon has low resource usage, mainly relying on the NetworkManager service
+- **Data Security**: Sensitive information such as WiFi passwords will be stored in the configuration, please keep it secure
+- **Network Mode**: Must use `host` network mode, cannot use bridged network
 
-#### 问题 1：Addon 无法启动
+## Troubleshooting
 
-**可能原因**：
-- 配置错误
-- 资源不足
-- 端口冲突
+### Common Issues
 
-**解决方法**：
-1. 检查"配置"标签页中的配置是否正确
-2. 查看"日志"标签页中的错误信息
-3. 确认系统资源是否充足
+#### Issue 1: Addon Cannot Start
 
-#### 问题 2：功能异常
+**Possible Causes**:
+- NetworkManager service is not running
+- WiFi device is unavailable or occupied
+- Insufficient permissions
+- Configuration error
 
-**可能原因**：
-- 配置不正确
-- 网络问题
-- 依赖服务未启动
+**Solutions**:
+1. Check if the NetworkManager service is running on the host: `sudo systemctl status NetworkManager`
+2. Check if the configuration in the "Configuration" tab is correct
+3. View error messages in the "Logs" tab
+4. Confirm the container has sufficient permissions (`privileged` mode and `NET_ADMIN`, `SYS_ADMIN` capabilities)
 
-**解决方法**：
-1. 检查相关配置项
-2. 查看日志获取详细错误信息
-3. 确认依赖服务状态
+#### Issue 2: Cannot Connect to WiFi
 
-### 获取帮助
+**Possible Causes**:
+- Incorrect WiFi password
+- Weak WiFi signal
+- Incorrect network configuration (static IP configuration error)
+- WiFi device issue
 
-如果遇到问题无法解决，可以：
+**Solutions**:
+1. Check if the WiFi password is correct
+2. Check WiFi signal strength
+3. If using static IP, check if IP address, gateway, and DNS configuration are correct
+4. View logs for detailed error information
+5. Check if the WiFi device is working properly
 
-1. 查看"日志"标签页获取详细错误信息
-2. 检查配置是否正确
-3. 联系技术支持
+#### Issue 3: Frequent Connection Drops
 
-## 更新和维护
+**Possible Causes**:
+- Unstable WiFi signal
+- Network configuration issues
+- Auto reconnect not enabled
 
-### 更新 Addon
+**Solutions**:
+1. Check WiFi signal strength
+2. Ensure `auto_reconnect` is set to `true`
+3. Check if network configuration is correct
+4. View logs to understand the disconnection reason
 
-当有新版本可用时，Haddons 会在"信息"标签页中提示更新。点击"更新"按钮即可升级到最新版本。
+### Getting Help
 
-### 备份配置
+If you encounter issues that cannot be resolved, you can:
 
-建议定期备份"配置"标签页中的配置信息，以便在需要时快速恢复。
+1. View the "Logs" tab for detailed error information
+2. Check if the configuration is correct
+3. Confirm NetworkManager service status
+4. Contact technical support
 
-## 许可证
+## Updates and Maintenance
+
+### Update Addon
+
+When a new version is available, Haddons will prompt for updates in the "Information" tab. Click the "Update" button to upgrade to the latest version.
+
+### Backup Configuration
+
+It is recommended to regularly backup the configuration information in the "Configuration" tab for quick recovery when needed.
+
+## License
 
 MIT
