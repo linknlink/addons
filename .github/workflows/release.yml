@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*-v*'
+
+jobs:
+  release:
+    name: Release Addon
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse tag
+        id: tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          # 解析格式: <addon-name>-v<version>
+          if [[ "$TAG_NAME" =~ ^(.+)-v(.+)$ ]]; then
+            ADDON_NAME="${BASH_REMATCH[1]}"
+            VERSION="${BASH_REMATCH[2]}"
+            echo "addon_name=$ADDON_NAME" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Detected addon: $ADDON_NAME, version: $VERSION"
+          else
+            echo "Error: Invalid tag format. Expected: <addon-name>-v<version>"
+            exit 1
+          fi
+
+      - name: Build and push Docker image
+        run: |
+          ADDON_NAME="${{ steps.tag.outputs.addon_name }}"
+          VERSION="${{ steps.tag.outputs.version }}"
+          
+          echo "Building addon: $ADDON_NAME, version: $VERSION"
+          ./scripts/build-addon.sh "$ADDON_NAME" --push
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.tag.outputs.addon_name }} v${{ steps.tag.outputs.version }}
+          tag_name: ${{ github.ref }}
+          body: |
+            ## ${{ steps.tag.outputs.addon_name }} v${{ steps.tag.outputs.version }}
+            
+            ### Changes
+            - See CHANGELOG.md for details
+            
+            ### Installation
+            Add this repository to Home Assistant:
+            ```
+            https://github.com/linknlink/addons
+            ```
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

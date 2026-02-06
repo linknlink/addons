@@ -1,0 +1,41 @@
+# 构建产物
+*.log
+*.pid
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 环境变量和密钥
+.env
+*.token
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 构建目录
+build/
+dist/
+
+# 测试覆盖率
+.coverage
+htmlcov/

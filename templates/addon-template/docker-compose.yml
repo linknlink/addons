@@ -1,0 +1,11 @@
+services:
+  {{ADDON_SLUG}}:
+    build:
+      context: ./common
+      dockerfile: Dockerfile
+    container_name: {{ADDON_SLUG}}
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ENV_VAR=value

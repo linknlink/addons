@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  validate:
+    name: Validate Addons
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Validate all addons
+        run: |
+          for addon_dir in addons/*/; do
+            if [ -d "$addon_dir" ]; then
+              addon_name=$(basename "$addon_dir")
+              echo "Validating addon: $addon_name"
+              ./scripts/validate-addon.sh "$addon_name" || exit 1
+            fi
+          done
+
+  build-test:
+    name: Build Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Detect changed addons
+        id: changes
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            addons:
+              - 'addons/**'
+
+      - name: Build changed addons
+        if: steps.changes.outputs.addons == 'true'
+        run: |
+          # 检测变更的 addon
+          for addon_dir in addons/*/; do
+            if [ -d "$addon_dir" ]; then
+              addon_name=$(basename "$addon_dir")
+              # 检查是否有变更
+              if git diff --name-only HEAD~1 | grep -q "^addons/$addon_name/"; then
+                echo "Building addon: $addon_name"
+                ./scripts/build-addon.sh "$addon_name" --arch ${{ matrix.arch }} || exit 1
+              fi
+            fi
+          done
