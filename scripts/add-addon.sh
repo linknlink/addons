@@ -93,12 +93,21 @@ mkdir -p "$ADDONS_DIR/$ADDON_NAME/scripts"
 if [ "$USE_TEMPLATE" = true ] && [ -d "$TEMPLATE_DIR" ]; then
     echo -e "${GREEN}从模板复制文件...${NC}"
     
-    # 复制模板文件（排除 template/ 目录，因为它只用于生成 haddons template）
+    # 复制模板文件（排除 template/ 目录，因为它需要单独处理）
     rsync -av --exclude='template/' "$TEMPLATE_DIR/" "$ADDONS_DIR/$ADDON_NAME/" 2>/dev/null || {
         # 如果 rsync 不可用，使用 cp 并手动排除
         cp -r "$TEMPLATE_DIR"/* "$ADDONS_DIR/$ADDON_NAME/" 2>/dev/null || true
         rm -rf "$ADDONS_DIR/$ADDON_NAME/template" 2>/dev/null || true
     }
+    
+    # 复制 template/ 目录到 addon 的 template/ 目录（用于生成上传用的 template）
+    if [ -d "$TEMPLATE_DIR/template" ]; then
+        echo -e "${GREEN}复制 template 模板文件...${NC}"
+        mkdir -p "$ADDONS_DIR/$ADDON_NAME/template"
+        cp -r "$TEMPLATE_DIR/template"/* "$ADDONS_DIR/$ADDON_NAME/template/" 2>/dev/null || true
+        echo "  ✓ 已创建 $ADDONS_DIR/$ADDON_NAME/template/ 目录"
+        echo "  ⚠ 请编辑 template/ 目录中的文件，填充实际的模板内容"
+    fi
     
     # 替换模板变量
     ADDON_SLUG="${ADDON_NAME//-/_}"
@@ -108,8 +117,8 @@ if [ "$USE_TEMPLATE" = true ] && [ -d "$TEMPLATE_DIR" ]; then
     echo "  ADDON_NAME: ${ADDON_DISPLAY_NAME}"
     echo "  ADDON_SLUG: ${ADDON_SLUG}"
     
-    # 替换所有模板文件中的变量（排除二进制文件）
-    find "$ADDONS_DIR/$ADDON_NAME" -type f \( \
+    # 替换所有模板文件中的变量（排除二进制文件和 template/ 目录）
+    find "$ADDONS_DIR/$ADDON_NAME" -type f -not -path "*/template/*" \( \
         -name "*.md" -o \
         -name "*.json" -o \
         -name "*.yml" -o \
@@ -119,7 +128,7 @@ if [ "$USE_TEMPLATE" = true ] && [ -d "$TEMPLATE_DIR" ]; then
         -name "VERSION" \
     \) -exec sed -i "s/{{ADDON_NAME}}/$ADDON_DISPLAY_NAME/g" {} \; 2>/dev/null || true
     
-    find "$ADDONS_DIR/$ADDON_NAME" -type f \( \
+    find "$ADDONS_DIR/$ADDON_NAME" -type f -not -path "*/template/*" \( \
         -name "*.md" -o \
         -name "*.json" -o \
         -name "*.yml" -o \
@@ -128,6 +137,23 @@ if [ "$USE_TEMPLATE" = true ] && [ -d "$TEMPLATE_DIR" ]; then
         -name "Dockerfile" -o \
         -name "VERSION" \
     \) -exec sed -i "s/{{ADDON_SLUG}}/$ADDON_SLUG/g" {} \; 2>/dev/null || true
+    
+    # 替换 template/ 目录中的变量
+    if [ -d "$ADDONS_DIR/$ADDON_NAME/template" ]; then
+        find "$ADDONS_DIR/$ADDON_NAME/template" -type f \( \
+            -name "*.md" -o \
+            -name "*.json" -o \
+            -name "*.yml" -o \
+            -name "*.yaml" \
+        \) -exec sed -i "s/{{ADDON_NAME}}/$ADDON_DISPLAY_NAME/g" {} \; 2>/dev/null || true
+        
+        find "$ADDONS_DIR/$ADDON_NAME/template" -type f \( \
+            -name "*.md" -o \
+            -name "*.json" -o \
+            -name "*.yml" -o \
+            -name "*.yaml" \
+        \) -exec sed -i "s/{{ADDON_SLUG}}/$ADDON_SLUG/g" {} \; 2>/dev/null || true
+    fi
     
     # 确保 config.json 存在且格式正确
     if [ ! -f "$ADDONS_DIR/$ADDON_NAME/config.json" ]; then
@@ -285,13 +311,22 @@ echo "  1. 编辑 $ADDONS_DIR/$ADDON_NAME/README.md - 描述 addon 的功能和�
 echo "  2. 编辑 $ADDONS_DIR/$ADDON_NAME/config.json - 配置 addon 的元数据和选项"
 echo "  3. 编辑 $ADDONS_DIR/$ADDON_NAME/common/Dockerfile - 配置 Docker 构建"
 echo "  4. 编辑 $ADDONS_DIR/$ADDON_NAME/common/rootfs/app/ - 添加应用代码"
-echo "  5. 运行 ./scripts/validate-addon.sh $ADDON_NAME 验证结构"
-echo "  6. 运行 ./scripts/build-addon.sh $ADDON_NAME 测试构建"
+if [ -d "$ADDONS_DIR/$ADDON_NAME/template" ]; then
+    echo "  5. 编辑 $ADDONS_DIR/$ADDON_NAME/template/ - 填充上传用的模板内容"
+    echo "     - README.md: 用户核心能力说明（会显示在 Addon 卡片中）"
+    echo "     - DOCS.md: 详细使用说明（会显示在文档标签页）"
+    echo "     - upload_config.json: 上传配置"
+fi
+echo "  6. 运行 ./scripts/validate-addon.sh $ADDON_NAME 验证结构"
+echo "  7. 运行 ./scripts/build-addon.sh $ADDON_NAME 测试构建"
 if [ "$GENERATE_TEMPLATE" != true ]; then
-    echo "  7. 运行 ./scripts/generate-template-from-addon.sh $ADDON_NAME 生成上传用的 template"
+    echo "  8. 运行 ./scripts/generate-template-from-addon.sh $ADDON_NAME 生成上传用的 template"
 fi
 echo ""
 echo -e "${YELLOW}提示:${NC}"
 echo "  - README.md 是 addon 级文档，面向开发者，描述技术实现"
-echo "  - 生成 template 后，会创建用户文档（template/README.md 和 DOCS.md）"
+if [ -d "$ADDONS_DIR/$ADDON_NAME/template" ]; then
+    echo "  - template/ 目录包含上传用的模板文件，需要手动编辑填充实际内容"
+    echo "  - 可以使用 AI 辅助生成 template/ 目录中的内容"
+fi
 echo ""
