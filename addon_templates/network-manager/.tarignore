@@ -5,3 +5,5 @@ __pycache__
 *.pyc
 *.log
 .DS_Store
+TEMPLATE_INFO.md
+README.md
