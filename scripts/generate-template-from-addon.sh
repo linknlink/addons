@@ -209,6 +209,7 @@ ${ADDON_DESCRIPTION:-Docker 容器应用描述，旨在为 Ubuntu Server 系统�
 - 检查 \`visiturl\` 是否正确配置
 - 验证 Docker 镜像是否可用
 EOF
+    fi
 fi
 
 # 检查是否有 icon.png
