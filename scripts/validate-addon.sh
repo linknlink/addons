@@ -140,7 +140,6 @@ echo ""
 
 # 必需文件
 check_file "$ADDON_DIR/VERSION" true
-check_file "$ADDON_DIR/config.json" true
 check_file "$ADDON_DIR/docker-compose.yml" true
 
 # 推荐文件（README.md 是 addon 级文档，面向开发者）

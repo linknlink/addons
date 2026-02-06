@@ -131,8 +131,6 @@ Haddons Template 是用于上传到 Haddons 服务的模板文件包。**注意*
 #### 1. upload_config.json（自动生成）
 
 **生成方式**：
-- 使用脚本 `generate-template-from-addon.sh` **自动生成**（不是从 addon 拷贝，因为 addon 中没有此文件）
-- 脚本从 addon 的 `config.json`（优先）或 `repository.json` 提取信息
 - 脚本从 addon 的 `VERSION` 文件读取版本号
 - 使用提取的信息和默认值生成完整的 `upload_config.json` 文件
 
@@ -313,15 +311,11 @@ TEMPLATE_INFO.md
 
 ### 生成 Template
 
-可以使用脚本自动生成 Template：
-
-```bash
-# 从 addon 生成 template
-./scripts/generate-template-from-addon.sh <addon-name>
-
 # 生成后需要检查：
 # 1. upload_config.json 中的配置是否正确
 # 2. docker-compose.yml 是否使用 image: 而不是 build:
 # 3. README.md 和 DOCS.md 是否需要完善
 # 4. icon.png 是否存在
 ```
+
+**重要**：需要生成template子目录，所有配置文件放在template目录中
