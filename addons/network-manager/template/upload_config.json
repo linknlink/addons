@@ -1,0 +1,15 @@
+{
+    "name": "Network Manager",
+    "addonid": "0",
+    "addondescription": "为 Ubuntu Server 系统提供 WiFi 网络管理功能的 Docker 容器应用",
+    "version": "0.0.3",
+    "visiturl": "",
+    "issupportupdate": 0,
+    "issupportuninstall": 1,
+    "isbuiltin": 0,
+    "candisableservice": 1,
+    "releasestatus": 1,
+    "order": 0,
+    "display_name": "network-manager",
+    "id": "network-manager"
+}
