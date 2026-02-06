@@ -1,6 +1,12 @@
 # 贡献指南
 
-感谢您对 LinknLink Docker 容器应用仓库的兴趣！本文档将指导您如何参与贡献。
+感谢您对 LinknLink Haddons Addon 仓库的兴趣！本文档将指导您如何参与贡献。
+
+## 关于 Haddons
+
+本仓库中的 Addon 专为 **Haddons** 服务设计。Haddons 是一个参照 Home Assistant Add-on 管理实现的一套 Addon 管理系统，允许用户通过 Web 界面浏览、安装、配置、监控和管理基于 Docker Compose 的应用程序。
+
+在贡献 Addon 之前，请确保了解 Haddons 的配置规范和要求。
 
 ## 如何贡献
 
@@ -20,26 +26,43 @@
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 创建 Pull Request
 
-### 添加新容器应用
+### 添加新 Haddons Addon
 
-1. 使用脚本创建容器应用：
+1. 使用脚本创建 Addon：
    ```bash
-   ./scripts/add-addon.sh my-new-container
+   ./scripts/add-addon.sh my-new-addon
+   ```
+   脚本会自动创建：
+   - `config.json`（Haddons 服务必需的配置文件）
+   - `docker-compose.yml`（Haddons 服务必需的 Docker Compose 配置）
+   - 基本的目录结构和文件
+
+2. 编辑 `config.json`，配置 Addon 的元数据、配置选项和 Schema
+
+3. 编辑 `docker-compose.yml`，配置容器的编排设置
+
+4. 开发 Addon 功能代码
+
+5. 验证 Addon 结构：
+   ```bash
+   ./scripts/validate-addon.sh my-new-addon
+   ```
+   验证脚本会检查：
+   - `config.json` 是否存在且格式正确（Haddons 必需）
+   - `docker-compose.yml` 是否存在（Haddons 必需）
+   - 其他必需文件和目录
+
+6. 测试构建：
+   ```bash
+   ./scripts/build-addon.sh my-new-addon
    ```
 
-2. 开发容器应用功能
-
-3. 验证容器应用：
+7. 生成上传用的 template（如需要）：
    ```bash
-   ./scripts/validate-addon.sh my-new-container
+   ./scripts/generate-template-from-addon.sh my-new-addon
    ```
 
-4. 测试构建：
-   ```bash
-   ./scripts/build-addon.sh my-new-container
-   ```
-
-5. 提交 Pull Request
+8. 提交 Pull Request
 
 ## 代码规范
 
@@ -133,24 +156,38 @@ cd addons
 
 ## 测试
 
-### 验证容器应用
+### 验证 Haddons Addon
 
 ```bash
-./scripts/validate-addon.sh <container-name>
+./scripts/validate-addon.sh <addon-name>
 ```
+
+验证脚本会检查：
+- `config.json` 是否存在且格式正确（Haddons 服务必需）
+- `docker-compose.yml` 是否存在（Haddons 服务必需）
+- `VERSION` 文件是否存在
+- `common/Dockerfile` 是否存在
+- 其他必需文件和目录
 
 ### 构建测试
 
 ```bash
-./scripts/build-addon.sh <container-name> --arch amd64
+./scripts/build-addon.sh <addon-name> --arch amd64
 ```
 
 ### 本地运行
 
 ```bash
-cd addons/<container-name>
+cd addons/<addon-name>
 docker-compose up --build
 ```
+
+### 在 Haddons 服务中测试
+
+1. 将 Addon 目录复制到 Haddons 的 `addons/` 目录
+2. 在 Haddons Web 界面中刷新 Addon 列表
+3. 验证 Addon 是否正确显示
+4. 测试安装、配置、启动等功能
 
 ## 文档
 

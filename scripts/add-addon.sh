@@ -96,18 +96,57 @@ if [ "$USE_TEMPLATE" = true ] && [ -d "$TEMPLATE_DIR" ]; then
     # 替换模板变量
     find "$ADDONS_DIR/$ADDON_NAME" -type f -exec sed -i "s/{{ADDON_NAME}}/$ADDON_NAME/g" {} \;
     find "$ADDONS_DIR/$ADDON_NAME" -type f -exec sed -i "s/{{ADDON_SLUG}}/${ADDON_NAME//-/_}/g" {} \;
+    
+    # 如果模板中没有 config.json，创建一个
+    if [ ! -f "$ADDONS_DIR/$ADDON_NAME/config.json" ]; then
+        echo -e "${GREEN}创建 config.json（Haddons 必需）...${NC}"
+        ADDON_SLUG="${ADDON_NAME//-/_}"
+        VERSION="0.0.1"
+        if [ -f "$ADDONS_DIR/$ADDON_NAME/VERSION" ]; then
+            VERSION=$(cat "$ADDONS_DIR/$ADDON_NAME/VERSION" | tr -d '[:space:]')
+        fi
+        cat > "$ADDONS_DIR/$ADDON_NAME/config.json" <<EOF
+{
+  "name": "$(echo $ADDON_NAME | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr(\$i,1,1)),\$i)}1')",
+  "version": "${VERSION}",
+  "slug": "${ADDON_SLUG}",
+  "description": "Haddons Addon 描述，旨在为 Ubuntu Server 系统提供相关能力。",
+  "arch": ["aarch64", "amd64", "armv7"],
+  "startup": "services",
+  "boot": "auto",
+  "options": {},
+  "schema": {}
+}
+EOF
+    fi
 else
     # 创建基本文件
     echo -e "${GREEN}创建基本文件...${NC}"
     
     # VERSION
     echo "0.0.1" > "$ADDONS_DIR/$ADDON_NAME/VERSION"
+    
+    # config.json（Haddons 必需）
+    ADDON_SLUG="${ADDON_NAME//-/_}"
+    cat > "$ADDONS_DIR/$ADDON_NAME/config.json" <<EOF
+{
+  "name": "$(echo $ADDON_NAME | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr(\$i,1,1)),\$i)}1')",
+  "version": "0.0.1",
+  "slug": "${ADDON_SLUG}",
+  "description": "Haddons Addon 描述，旨在为 Ubuntu Server 系统提供相关能力。",
+  "arch": ["aarch64", "amd64", "armv7"],
+  "startup": "services",
+  "boot": "auto",
+  "options": {},
+  "schema": {}
+}
+EOF
 
     # README.md
     cat > "$ADDONS_DIR/$ADDON_NAME/README.md" <<EOF
 # ${ADDON_NAME}
 
-Docker 容器应用描述，旨在为 Ubuntu Server 系统提供相关能力。
+Haddons Addon 描述，旨在为 Ubuntu Server 系统提供相关能力。
 
 ## 功能
 
@@ -162,6 +201,17 @@ echo "Starting ${ADDON_NAME}..."
 exec "\$@"
 EOF
     chmod +x "$ADDONS_DIR/$ADDON_NAME/common/rootfs/app/docker-entrypoint.sh"
+    
+    # docker-compose.yml（Haddons 必需）
+    cat > "$ADDONS_DIR/$ADDON_NAME/docker-compose.yml" <<EOF
+services:
+  ${ADDON_SLUG}:
+    image: ghcr.io/linknlink/${ADDON_SLUG}:latest
+    container_name: ${ADDON_SLUG}
+    restart: unless-stopped
+    environment:
+      - ENV_VAR=value
+EOF
 fi
 
 echo ""

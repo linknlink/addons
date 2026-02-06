@@ -1,8 +1,6 @@
 services:
   network_manager:
-    build:
-      context: ./common
-      dockerfile: Dockerfile
+    image: ghcr.io/linknlink/network_manager:0.0.3
     container_name: network_manager
     restart: unless-stopped
     network_mode: host
@@ -21,7 +19,7 @@ services:
       # - INITIAL_WIFI_GATEWAY=192.168.1.1
       # - INITIAL_WIFI_DNS=8.8.8.8 8.8.4.4
     volumes:
-      - ./common/rootfs/runtime/data:/data
+      - /data:/data
       - /etc/NetworkManager:/etc/NetworkManager:ro
       - /var/lib/NetworkManager:/var/lib/NetworkManager
       # D-Bus socket，用于与宿主机的 NetworkManager 通信

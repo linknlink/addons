@@ -1,6 +1,12 @@
-# Docker 容器应用开发指南
+# Haddons Addon 开发指南
 
-本指南介绍如何在这个仓库中开发和添加新的 Docker 容器应用。这些容器应用旨在为 Ubuntu Server 系统（特别是鲁班猫设备）提供相关能力。
+本指南介绍如何在这个仓库中开发和添加新的 **Haddons Addon**。这些 Addon 专为 Haddons 服务设计，遵循 Haddons 的配置规范，可以直接部署到 Haddons 服务中使用。
+
+## 关于 Haddons
+
+**Haddons** 是一个参照 Home Assistant Add-on 管理实现的一套 Addon 管理系统，允许用户通过 Web 界面浏览、安装、配置、监控和管理基于 Docker Compose 的应用程序。
+
+本仓库中的 Addon 需要包含 `config.json` 文件（Haddons 服务必需的配置文件）和 `docker-compose.yml` 文件（用于容器编排），以便 Haddons 服务能够正确识别和管理。
 
 ## 目录
 
@@ -37,27 +43,63 @@
 
 ```
 addon-name/
+├── config.json         # Haddons Addon 元数据配置（必需，用于 Haddons 服务）
+├── repository.json     # 仓库元数据（可选，用于构建时指定架构）
 ├── VERSION             # 版本号文件（必需）
-├── repository.json     # Addon 元数据（可选，用于指定架构）
 ├── README.md           # 说明文档（推荐）
 ├── CHANGELOG.md        # 更新日志（推荐）
+├── docker-compose.yml  # Docker Compose 配置（必需，Haddons 服务使用）
 ├── common/             # 通用文件目录（必需）
 │   ├── Dockerfile      # Docker 构建文件（必需）
 │   └── rootfs/         # 根文件系统（必需）
 │       └── app/        # 应用代码
 │           └── docker-entrypoint.sh  # 启动脚本
-├── docker-compose.yml  # Docker Compose 配置（开发用，可选）
 ├── requirements.txt    # Python 依赖（如适用）
 └── scripts/            # Addon 特定脚本（可选）
 ```
 
-### repository.json（可选）
+### config.json（必需，用于 Haddons 服务）
+
+**这是 Haddons 服务必需的配置文件**，定义了 Addon 的元数据、配置选项和 Schema。Haddons 服务会读取此文件来识别和管理 Addon。
+
+```json
+{
+  "name": "My Addon",
+  "version": "0.0.1",
+  "slug": "my_addon",
+  "description": "Addon 描述信息",
+  "arch": ["aarch64", "amd64", "armv7"],
+  "startup": "services",
+  "boot": "auto",
+  "options": {
+    "my_option": "default_value"
+  },
+  "schema": {
+    "my_option": "str"
+  }
+}
+```
+
+**字段说明**：
+- `name`: Addon 显示名称
+- `version`: Addon 版本号（应与 VERSION 文件一致）
+- `slug`: Addon 唯一标识符（用于目录名和 URL，使用下划线分隔）
+- `description`: Addon 描述信息
+- `arch`: 支持的架构列表
+- `startup`: 启动类型（`application`/`system`/`services`）
+- `boot`: 启动方式（`auto`/`manual`）
+- `options`: 配置选项的默认值
+- `schema`: 配置选项的 Schema 定义（用于前端表单生成）
+
+**注意**：此文件是 Haddons 服务识别和管理 Addon 的关键文件，必须存在且格式正确。
+
+### repository.json（可选，用于构建）
 
 可选的元数据文件，主要用于指定支持的架构。如果不提供，构建时会使用默认架构（amd64, aarch64, armv7）。
 
 ```json
 {
-  "name": "My Container",
+  "name": "My Addon",
   "url": "https://github.com/linknlink/addons",
   "maintainer": "linknlink <https://github.com/linknlink>",
   "description": "Docker container description",
@@ -65,8 +107,7 @@ addon-name/
 }
 ```
 
-**注意**：可以通过 `--arch` 参数在构建时指定架构，所以此文件不是必需的。
-```
+**注意**：可以通过 `--arch` 参数在构建时指定架构，所以此文件不是必需的。但建议保留，以便与 `config.json` 保持一致。
 
 ### VERSION
 

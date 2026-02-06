@@ -140,6 +140,8 @@ echo ""
 
 # 必需文件
 check_file "$ADDON_DIR/VERSION" true
+check_file "$ADDON_DIR/config.json" true
+check_file "$ADDON_DIR/docker-compose.yml" true
 check_file "$ADDON_DIR/README.md" false
 
 # 可选文件（用于元数据和架构配置）
@@ -160,11 +162,11 @@ echo "验证 JSON 文件..."
 echo ""
 
 # 验证 JSON 文件（如果存在）
-if [ -f "$ADDON_DIR/repository.json" ]; then
-    validate_json "$ADDON_DIR/repository.json"
-fi
 if [ -f "$ADDON_DIR/config.json" ]; then
     validate_json "$ADDON_DIR/config.json"
+fi
+if [ -f "$ADDON_DIR/repository.json" ]; then
+    validate_json "$ADDON_DIR/repository.json"
 fi
 
 echo ""

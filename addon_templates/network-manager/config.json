@@ -1,0 +1,15 @@
+{
+  "name": "Network Manager",
+  "version": "0.0.3",
+  "slug": "network_manager",
+  "description": "为 Ubuntu Server 系统（特别是鲁班猫设备）提供 WiFi 网络管理功能的 Docker 容器应用",
+  "arch": [
+  "aarch64",
+  "amd64",
+  "armv7"
+],
+  "startup": "services",
+  "boot": "auto",
+  "options": {},
+  "schema": {}
+}

@@ -1,0 +1,11 @@
+{
+  "name": "{{ADDON_NAME}}",
+  "version": "0.0.1",
+  "slug": "{{ADDON_SLUG}}",
+  "description": "Haddons Addon 描述，旨在为 Ubuntu Server 系统提供相关能力。",
+  "arch": ["aarch64", "amd64", "armv7"],
+  "startup": "services",
+  "boot": "auto",
+  "options": {},
+  "schema": {}
+}

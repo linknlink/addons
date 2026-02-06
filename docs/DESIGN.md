@@ -1,16 +1,30 @@
-# Docker 容器应用管理仓库框架设计文档
+# Haddons Addon 管理仓库框架设计文档
 
 ## 1. 概述
 
-本文档描述了一个用于管理多个 Docker 容器应用的仓库框架设计。该框架支持统一管理、构建和发布多个容器应用，同时保持每个容器应用的独立性和可维护性。这些容器应用旨在为 Ubuntu Server 系统提供相关能力。
+本文档描述了一个用于管理多个 **Haddons Addon** 的仓库框架设计。该框架支持统一管理、构建和发布多个 Addon，同时保持每个 Addon 的独立性和可维护性。
+
+### 1.1 关于 Haddons
+
+**Haddons** 是一个参照 Home Assistant Add-on 管理实现的一套 Addon 管理系统，允许用户通过 Web 界面浏览、安装、配置、监控和管理基于 Docker Compose 的应用程序。
+
+本仓库中的 Addon 遵循 Haddons 的配置规范，可以直接部署到 Haddons 服务中使用。Haddons 服务会扫描 `addons/` 目录下的每个子目录，读取 `config.json` 文件获取 Addon 元数据，并使用 `docker-compose.yml` 管理容器的生命周期。
+
+### 1.2 项目定位
+
+- **目标服务**：Haddons（而非 Home Assistant）
+- **Addon 格式**：遵循 Haddons 配置规范（类似 HA Add-on，但独立实现）
+- **部署方式**：通过 Haddons 服务管理，支持 Web 界面操作
+- **系统环境**：主要针对 Ubuntu Server 系统（特别是鲁班猫设备）优化
 
 ## 2. 设计目标
 
-- **统一管理**: 在一个仓库中管理多个 Docker 容器应用
-- **标准化结构**: 每个容器应用遵循统一的结构和规范
-- **自动化构建**: 支持 CI/CD 自动化构建和发布
-- **易于扩展**: 方便添加新的容器应用
-- **版本管理**: 每个容器应用独立版本管理
+- **统一管理**: 在一个仓库中管理多个 Haddons Addon
+- **标准化结构**: 每个 Addon 遵循 Haddons 配置规范和统一的结构
+- **Haddons 兼容**: 完全兼容 Haddons 服务的配置格式和管理方式
+- **自动化构建**: 支持 CI/CD 自动化构建和发布 Docker 镜像
+- **易于扩展**: 方便添加新的 Addon
+- **版本管理**: 每个 Addon 独立版本管理
 - **文档完善**: 提供清晰的文档和使用指南
 - **Ubuntu Server 优化**: 针对 Ubuntu Server 系统（特别是鲁班猫设备）优化
 
@@ -23,9 +37,9 @@ addons/
 │       ├── ci.yml              # CI 工作流（测试、构建）
 │       └── release.yml         # 发布工作流
 ├── addons/                     # Addon 目录
-│   ├── linknlink-remote/       # 示例 addon
-│   │   ├── repository.json     # Addon 元数据（可选）
-│   │   ├── config.json         # Addon 配置（可选）
+│   ├── network-manager/        # 示例 addon
+│   │   ├── config.json         # Haddons Addon 元数据配置（必需，用于 Haddons 服务）
+│   │   ├── repository.json     # 仓库元数据（可选，用于构建时指定架构）
 │   │   ├── VERSION             # Addon 版本号
 │   │   ├── README.md           # Addon 说明文档
 │   │   ├── CHANGELOG.md        # 更新日志
@@ -33,7 +47,7 @@ addons/
 │   │   │   ├── Dockerfile      # Docker 构建文件
 │   │   │   └── rootfs/         # 根文件系统
 │   │   │       └── app/        # 应用代码
-│   │   ├── docker-compose.yml  # Docker Compose 配置（开发用）
+│   │   ├── docker-compose.yml  # Docker Compose 配置（Haddons 服务使用）
 │   │   ├── requirements.txt    # Python 依赖（如适用）
 │   │   └── scripts/            # Addon 特定脚本
 │   │       └── build.sh        # 构建脚本
@@ -73,25 +87,66 @@ addons/
 
 每个 addon 位于 `addons/` 目录下，包含以下核心文件：
 
-#### 4.2.1 repository.json（可选）
+#### 4.2.1 config.json（必需，用于 Haddons 服务）
+
+**这是 Haddons 服务必需的配置文件**，定义了 Addon 的元数据、配置选项和 Schema。Haddons 服务会读取此文件来识别和管理 Addon。
+
+```json
+{
+  "name": "Network Manager",
+  "version": "0.0.3",
+  "slug": "network_manager",
+  "description": "为 Ubuntu Server 系统提供 WiFi 网络管理功能的 Docker 容器应用",
+  "arch": ["aarch64", "amd64", "armv7"],
+  "startup": "services",
+  "boot": "auto",
+  "options": {
+    "wifi_scan_interval": 30,
+    "auto_reconnect": true,
+    "default_ip_method": "dhcp",
+    "log_level": "info"
+  },
+  "schema": {
+    "wifi_scan_interval": "int",
+    "auto_reconnect": "bool",
+    "default_ip_method": "str",
+    "log_level": "str"
+  },
+  "ingress": false,
+  "ingress_port": 0
+}
+```
+
+**字段说明**：
+- `name`: Addon 显示名称
+- `version`: Addon 版本号（应与 VERSION 文件一致）
+- `slug`: Addon 唯一标识符（用于目录名和 URL）
+- `description`: Addon 描述信息
+- `arch`: 支持的架构列表
+- `startup`: 启动类型（`application`/`system`/`services`）
+- `boot`: 启动方式（`auto`/`manual`）
+- `options`: 配置选项的默认值
+- `schema`: 配置选项的 Schema 定义（用于前端表单生成）
+- `ingress`: 是否支持 Web UI 嵌入（可选）
+- `ingress_port`: 容器内部 Web 端口（可选）
+
+**注意**：此文件是 Haddons 服务识别和管理 Addon 的关键文件，必须存在且格式正确。
+
+#### 4.2.2 repository.json（可选，用于构建）
 
 可选的元数据文件，主要用于指定支持的架构。如果不提供，构建时会使用默认架构（amd64, aarch64, armv7）或通过 `--arch` 参数指定。
 
 ```json
 {
-  "name": "LinknLink Remote",
+  "name": "Network Manager",
   "url": "https://github.com/linknlink/addons",
   "maintainer": "linknlink <https://github.com/linknlink>",
-  "description": "Docker container for remote access through the LinknLink platform",
+  "description": "Docker container for WiFi network management",
   "arch": ["aarch64", "amd64", "armv7"]
 }
 ```
 
-**注意**：此文件不是必需的，可以通过 `--arch` 参数在构建时指定架构。
-
-#### 4.2.2 config.json
-
-Addon 的配置模板文件（可选），定义配置项和默认值：
+**注意**：此文件主要用于构建时指定架构，可以通过 `--arch` 参数在构建时指定架构，所以此文件不是必需的。但建议保留，以便与 `config.json` 保持一致。
 
 ```json
 {
@@ -113,7 +168,30 @@ Addon 的配置模板文件（可选），定义配置项和默认值：
 }
 ```
 
-#### 4.2.3 common/ 目录
+#### 4.2.3 docker-compose.yml（必需，用于 Haddons 服务）
+
+**这是 Haddons 服务必需的配置文件**，定义了容器的编排配置。Haddons 服务使用此文件来启动、停止和管理容器。
+
+```yaml
+services:
+  network_manager:
+    image: ghcr.io/linknlink/network_manager:0.0.3
+    container_name: network_manager
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    environment:
+      - WIFI_SCAN_INTERVAL=30
+      - AUTO_RECONNECT=true
+```
+
+**要求**：
+- 使用 Docker Compose v3 格式
+- 容器名称建议使用 Addon slug
+- 建议设置 `restart: unless-stopped` 或 `restart: always`
+- 镜像名称格式：`ghcr.io/linknlink/<slug>:<version>`
+
+#### 4.2.4 common/ 目录
 
 包含 Dockerfile 和应用代码：
 
