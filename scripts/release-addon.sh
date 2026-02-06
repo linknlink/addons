@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # 发布 addon 的脚本
+# 自动递增版本号，更新 VERSION 文件，并推送到 GitHub 触发构建流程
 # 使用方法: ./scripts/release-addon.sh <addon-name> [patch|minor|major] [--commit] [--push] [--trigger]
 
 set -e
@@ -173,14 +174,6 @@ fi
 
 echo -e "${GREEN}✓ 版本已更新为 ${NEW_VERSION}${NC}"
 
-# 构建 addon
-echo ""
-echo -e "${GREEN}构建 addon...${NC}"
-"$SCRIPT_DIR/build-addon.sh" "$ADDON_NAME" --push || {
-    echo -e "${RED}构建失败${NC}"
-    exit 1
-}
-
 # 提交更改
 if [ "$COMMIT" = true ]; then
     echo ""
@@ -224,10 +217,11 @@ if [ "$PUSH" = true ]; then
             fi
         fi
         
-        # 推送 tags
+        # 推送 tags (通过 tag 触发 CI 构建)
         echo -e "${GREEN}推送 tags...${NC}"
         if git push origin "$TAG_NAME"; then
              echo -e "${GREEN}✓ 已推送 tags${NC}"
+             echo -e "${GREEN}✓ GitHub Actions 将自动触发构建流程${NC}"
         else
              echo -e "${RED}✗ tags 推送失败${NC}"
         fi

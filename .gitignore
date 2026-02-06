@@ -31,6 +31,7 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+linknlink.token
 
 # 构建目录
 build/

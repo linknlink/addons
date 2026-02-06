@@ -128,6 +128,66 @@ fi
 echo -e "${GREEN}支持的架构: ${ARCHES[*]}${NC}"
 echo ""
 
+# 检查并设置 Docker buildx
+setup_buildx() {
+    local current_arch=$(uname -m)
+    local needs_multiarch=false
+    
+    # 检查是否需要多架构支持
+    for arch in "${ARCHES[@]}"; do
+        case "$arch" in
+            aarch64|armv7)
+                # 如果当前架构不是 ARM，则需要多架构支持
+                case "$current_arch" in
+                    x86_64|amd64)
+                        needs_multiarch=true
+                        break
+                        ;;
+                esac
+                ;;
+        esac
+    done
+    
+    if [ "$needs_multiarch" = true ]; then
+        echo -e "${YELLOW}检测到需要跨架构构建，正在设置 buildx 和 QEMU...${NC}"
+        
+        # 首先安装 QEMU 模拟器
+        echo -e "${GREEN}安装 QEMU 模拟器...${NC}"
+        if docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null; then
+            echo -e "${GREEN}✓ QEMU 安装成功${NC}"
+        else
+            echo -e "${RED}✗ QEMU 安装失败，多架构构建可能不可用${NC}"
+            echo -e "${YELLOW}提示: 可以只构建当前架构 (--arch amd64)${NC}"
+            return 1
+        fi
+        
+        # 检查并创建 buildx builder
+        if ! docker buildx ls 2>/dev/null | grep -q "multiarch"; then
+            echo -e "${GREEN}创建多架构 builder...${NC}"
+            if docker buildx create --name multiarch --driver docker-container --use 2>/dev/null; then
+                echo -e "${GREEN}✓ 多架构 builder 创建成功${NC}"
+            else
+                echo -e "${YELLOW}警告: 无法创建多架构 builder，将使用默认 builder${NC}"
+            fi
+        else
+            echo -e "${GREEN}使用现有的多架构 builder...${NC}"
+            docker buildx use multiarch 2>/dev/null || true
+        fi
+        
+        # 验证 buildx 是否支持多架构
+        if docker buildx inspect --bootstrap 2>/dev/null | grep -q "linux/arm"; then
+            echo -e "${GREEN}✓ Buildx 多架构支持已就绪${NC}"
+        else
+            echo -e "${YELLOW}警告: Buildx 可能不支持多架构，构建可能失败${NC}"
+        fi
+    else
+        echo -e "${GREEN}当前架构匹配，无需多架构支持${NC}"
+    fi
+}
+
+# 设置 buildx
+setup_buildx
+
 # 构建镜像
 for arch in "${ARCHES[@]}"; do
     echo -e "${BLUE}构建架构: ${arch}${NC}"
@@ -154,6 +214,16 @@ for arch in "${ARCHES[@]}"; do
     
     if [ "$PUSH" = true ]; then
         BUILD_CMD="$BUILD_CMD --push"
+    else
+        # 如果不推送，需要加载到本地（但跨架构构建可能不支持 --load）
+        current_arch=$(uname -m)
+        case "$arch" in
+            amd64)
+                if [ "$current_arch" = "x86_64" ] || [ "$current_arch" = "amd64" ]; then
+                    BUILD_CMD="$BUILD_CMD --load"
+                fi
+                ;;
+        esac
     fi
     
     echo "执行: $BUILD_CMD"
@@ -162,6 +232,17 @@ for arch in "${ARCHES[@]}"; do
         echo -e "${GREEN}✓ 架构 ${arch} 构建成功${NC}"
     else
         echo -e "${RED}✗ 架构 ${arch} 构建失败${NC}"
+        current_arch=$(uname -m)
+        case "$arch" in
+            aarch64|armv7)
+                if [ "$current_arch" != "aarch64" ] && [ "$current_arch" != "armv7l" ] && [ "$current_arch" != "armv6l" ]; then
+                    echo -e "${YELLOW}提示: 跨架构构建失败，可能需要：${NC}"
+                    echo -e "${YELLOW}  1. 安装 QEMU: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes${NC}"
+                    echo -e "${YELLOW}  2. 创建 buildx builder: docker buildx create --name multiarch --driver docker-container --use${NC}"
+                    echo -e "${YELLOW}  3. 或者只构建当前架构: --arch $(echo $current_arch | sed 's/x86_64/amd64/')${NC}"
+                fi
+                ;;
+        esac
         exit 1
     fi
     

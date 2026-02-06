@@ -60,11 +60,11 @@ check_file() {
     else
         if [ "$required" = "true" ]; then
             echo -e "${RED}✗${NC} $file (必需)"
-            ((ERRORS++))
+            ERRORS=$((ERRORS + 1))
             return 1
         else
             echo -e "${YELLOW}⚠${NC} $file (可选)"
-            ((WARNINGS++))
+            WARNINGS=$((WARNINGS + 1))
             return 0
         fi
     fi
@@ -81,11 +81,11 @@ check_dir() {
     else
         if [ "$required" = "true" ]; then
             echo -e "${RED}✗${NC} $dir/ (必需)"
-            ((ERRORS++))
+            ERRORS=$((ERRORS + 1))
             return 1
         else
             echo -e "${YELLOW}⚠${NC} $dir/ (可选)"
-            ((WARNINGS++))
+            WARNINGS=$((WARNINGS + 1))
             return 0
         fi
     fi
@@ -95,12 +95,17 @@ check_dir() {
 validate_json() {
     local file="$1"
     if [ -f "$file" ]; then
-        if jq empty "$file" 2>/dev/null; then
+        # 临时禁用 set -e 来检查 jq 的退出码
+        set +e
+        jq empty "$file" 2>/dev/null
+        local jq_exit_code=$?
+        set -e
+        if [ $jq_exit_code -eq 0 ]; then
             echo -e "${GREEN}✓${NC} JSON 格式正确: $file"
             return 0
         else
             echo -e "${RED}✗${NC} JSON 格式错误: $file"
-            ((ERRORS++))
+            ERRORS=$((ERRORS + 1))
             return 1
         fi
     fi
@@ -147,7 +152,7 @@ if [ -f "$ADDON_DIR/VERSION" ]; then
         echo -e "${GREEN}✓${NC} 版本号格式正确: $VERSION"
     else
         echo -e "${RED}✗${NC} 版本号格式错误: $VERSION (应为 MAJOR.MINOR.PATCH)"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 fi
 
@@ -158,7 +163,7 @@ if [ -f "$ADDON_DIR/common/Dockerfile" ]; then
         echo -e "${GREEN}✓${NC} Dockerfile 包含 FROM 指令"
     else
         echo -e "${RED}✗${NC} Dockerfile 缺少 FROM 指令"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 fi
 
