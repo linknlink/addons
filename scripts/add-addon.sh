@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 添加新 addon 到仓库的脚本
-# 使用方法: ./scripts/add-addon.sh <addon-name> [--from-template]
+# 使用方法: ./scripts/add-addon.sh <addon-name> [--from-template] [--generate-template]
 
 set -e
 
@@ -20,11 +20,13 @@ show_help() {
     echo "  addon-name    - Addon 名称（使用连字符，如: my-addon）"
     echo ""
     echo "选项:"
-    echo "  --from-template  - 从模板创建 addon（默认行为）"
-    echo "  --help, -h       - 显示此帮助信息"
+    echo "  --from-template      - 从模板创建 addon（默认行为）"
+    echo "  --generate-template  - 创建 addon 后生成上传用的 template"
+    echo "  --help, -h           - 显示此帮助信息"
     echo ""
     echo "示例:"
     echo "  $0 my-new-addon"
+    echo "  $0 my-new-addon --generate-template"
     echo "  $0 linknlink-remote"
 }
 
@@ -36,6 +38,7 @@ fi
 
 ADDON_NAME="$1"
 USE_TEMPLATE=true
+GENERATE_TEMPLATE=false
 
 # 解析选项
 shift
@@ -43,6 +46,10 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --from-template)
             USE_TEMPLATE=true
+            shift
+            ;;
+        --generate-template)
+            GENERATE_TEMPLATE=true
             shift
             ;;
         *)
@@ -160,9 +167,27 @@ fi
 echo ""
 echo -e "${GREEN}✓ Addon '$ADDON_NAME' 创建成功！${NC}"
 echo ""
+
+# 如果指定了生成 template，则调用生成脚本
+if [ "$GENERATE_TEMPLATE" = true ]; then
+    echo -e "${BLUE}正在生成上传用的 template...${NC}"
+    GENERATE_SCRIPT="$SCRIPT_DIR/generate-template-from-addon.sh"
+    if [ -f "$GENERATE_SCRIPT" ]; then
+        "$GENERATE_SCRIPT" "$ADDON_NAME" || {
+            echo -e "${YELLOW}警告: Template 生成失败，但 addon 已创建${NC}"
+        }
+    else
+        echo -e "${YELLOW}警告: 找不到 generate-template-from-addon.sh 脚本${NC}"
+    fi
+    echo ""
+fi
+
 echo "下一步:"
 echo "  1. 编辑 $ADDONS_DIR/$ADDON_NAME/ 目录下的文件"
 echo "  2. 配置 addon 的功能和设置"
 echo "  3. 运行 ./scripts/validate-addon.sh $ADDON_NAME 验证结构"
 echo "  4. 运行 ./scripts/build-addon.sh $ADDON_NAME 测试构建"
+if [ "$GENERATE_TEMPLATE" != true ]; then
+    echo "  5. 运行 ./scripts/generate-template-from-addon.sh $ADDON_NAME 生成上传用的 template"
+fi
 echo ""

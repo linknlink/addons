@@ -14,13 +14,18 @@ NC='\033[0m' # No Color
 
 # 显示帮助信息
 show_help() {
-    echo "使用方法: $0 <addon-name>"
+    echo "使用方法: $0 <addon-name> [选项]"
     echo ""
     echo "参数:"
     echo "  addon-name    - 要验证的 addon 名称"
     echo ""
+    echo "选项:"
+    echo "  --check-template  - 同时检查上传用的 template（如果存在）"
+    echo "  --help, -h        - 显示此帮助信息"
+    echo ""
     echo "示例:"
     echo "  $0 linknlink-remote"
+    echo "  $0 linknlink-remote --check-template"
 }
 
 # 检查参数
@@ -30,12 +35,30 @@ if [ $# -eq 0 ] || [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
 fi
 
 ADDON_NAME="$1"
+CHECK_TEMPLATE=false
+
+# 解析选项
+shift
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --check-template)
+            CHECK_TEMPLATE=true
+            shift
+            ;;
+        *)
+            echo -e "${RED}错误: 未知选项 '$1'${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
 
 # 获取脚本所在目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ADDONS_DIR="$PROJECT_ROOT/addons"
 ADDON_DIR="$ADDONS_DIR/$ADDON_NAME"
+TEMPLATE_DIR="$PROJECT_ROOT/addon_templates/$ADDON_NAME"
 
 # 检查 addon 是否存在
 if [ ! -d "$ADDON_DIR" ]; then
@@ -164,6 +187,64 @@ if [ -f "$ADDON_DIR/common/Dockerfile" ]; then
     else
         echo -e "${RED}✗${NC} Dockerfile 缺少 FROM 指令"
         ERRORS=$((ERRORS + 1))
+    fi
+fi
+
+# 检查 template（如果指定）
+if [ "$CHECK_TEMPLATE" = true ]; then
+    echo ""
+    echo "=========================================="
+    echo "检查上传用的 template..."
+    echo ""
+    
+    if [ -d "$TEMPLATE_DIR" ]; then
+        TEMPLATE_ERRORS=0
+        TEMPLATE_WARNINGS=0
+        
+        # 检查必需文件
+        check_file "$TEMPLATE_DIR/upload_config.json" true
+        if [ $? -ne 0 ]; then
+            TEMPLATE_ERRORS=$((TEMPLATE_ERRORS + 1))
+        fi
+        
+        check_file "$TEMPLATE_DIR/docker-compose.yml" false
+        if [ $? -ne 0 ]; then
+            TEMPLATE_WARNINGS=$((TEMPLATE_WARNINGS + 1))
+        fi
+        
+        check_file "$TEMPLATE_DIR/.tarignore" false
+        if [ $? -ne 0 ]; then
+            TEMPLATE_WARNINGS=$((TEMPLATE_WARNINGS + 1))
+        fi
+        
+        check_dir "$TEMPLATE_DIR/common" false
+        if [ $? -ne 0 ]; then
+            TEMPLATE_WARNINGS=$((TEMPLATE_WARNINGS + 1))
+        fi
+        
+        # 验证 upload_config.json JSON 格式
+        if [ -f "$TEMPLATE_DIR/upload_config.json" ]; then
+            validate_json "$TEMPLATE_DIR/upload_config.json"
+            if [ $? -ne 0 ]; then
+                TEMPLATE_ERRORS=$((TEMPLATE_ERRORS + 1))
+            fi
+        fi
+        
+        echo ""
+        echo "Template 验证结果:"
+        if [ $TEMPLATE_ERRORS -eq 0 ] && [ $TEMPLATE_WARNINGS -eq 0 ]; then
+            echo -e "${GREEN}✓ Template 验证通过！${NC}"
+        elif [ $TEMPLATE_ERRORS -eq 0 ]; then
+            echo -e "${YELLOW}⚠ Template 验证通过，但有 $TEMPLATE_WARNINGS 个警告${NC}"
+        else
+            echo -e "${RED}✗ Template 验证失败：发现 $TEMPLATE_ERRORS 个错误，$TEMPLATE_WARNINGS 个警告${NC}"
+            ERRORS=$((ERRORS + TEMPLATE_ERRORS))
+            WARNINGS=$((WARNINGS + TEMPLATE_WARNINGS))
+        fi
+    else
+        echo -e "${YELLOW}⚠ Template 目录不存在: $TEMPLATE_DIR${NC}"
+        echo "  运行 ./scripts/generate-template-from-addon.sh $ADDON_NAME 生成 template"
+        WARNINGS=$((WARNINGS + 1))
     fi
 fi
 
