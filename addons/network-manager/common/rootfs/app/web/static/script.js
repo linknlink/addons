@@ -115,11 +115,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function scanWifi() {
-        wifiListEl.innerHTML = '<div class="loading">正在扫描...</div>';
+        // 显示加载状态（如果列表为空）
+        const hasExistingItems = wifiListEl.querySelectorAll('.wifi-item').length > 0;
+        if (!hasExistingItems) {
+            wifiListEl.innerHTML = '<div class="loading">正在扫描...</div>';
+        }
+
         fetch('/api/wifi/scan')
             .then(res => res.json())
             .then(data => {
-                wifiListEl.innerHTML = '';
+                // 如果没有WiFi网络
                 if (data.length === 0) {
                     wifiListEl.innerHTML = '<div class="loading">未发现 WiFi 网络</div>';
                     return;
@@ -128,19 +133,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 按信号强度排序
                 data.sort((a, b) => (b.signal || 0) - (a.signal || 0));
 
-                data.forEach(net => {
-                    const item = document.createElement('div');
-                    item.className = 'wifi-item';
+                // 差异化更新：创建现有项的Map
+                const existingItems = new Map();
+                wifiListEl.querySelectorAll('.wifi-item').forEach(item => {
+                    const ssid = item.getAttribute('data-ssid');
+                    if (ssid) {
+                        existingItems.set(ssid, item);
+                    }
+                });
+
+                // 跟踪哪些SSID仍然存在
+                const currentSSIDs = new Set(data.map(net => net.ssid));
+
+                // 移除不再存在的WiFi网络
+                existingItems.forEach((item, ssid) => {
+                    if (!currentSSIDs.has(ssid)) {
+                        item.remove();
+                        existingItems.delete(ssid);
+                    }
+                });
+
+                // 移除加载提示（如果存在）
+                const loadingDiv = wifiListEl.querySelector('.loading');
+                if (loadingDiv) {
+                    loadingDiv.remove();
+                }
+
+                // 更新或创建WiFi项
+                data.forEach((net, index) => {
+                    const existingItem = existingItems.get(net.ssid);
 
                     const isSecure = net.security && net.security !== '--';
-                    // 使用CSS绘制的图标
                     const iconClass = isSecure ? 'wifi-icon wifi-signal secured' : 'wifi-icon wifi-signal unsecured';
                     const icon = `<div class="${iconClass}"></div>`;
-
-                    // 生成信号强度条
                     const signalBars = createSignalBars(net.signal || 0);
 
-                    item.innerHTML = `
+                    const itemHTML = `
                         ${icon}
                         <div class="wifi-details">
                             <div class="wifi-ssid">${net.ssid}</div>
@@ -156,11 +184,41 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
 
-                    item.addEventListener('click', () => {
-                        openConnectModal(net.ssid);
-                    });
+                    if (existingItem) {
+                        // 更新现有项（仅当内容变化时）
+                        if (existingItem.innerHTML !== itemHTML) {
+                            existingItem.innerHTML = itemHTML;
+                        }
 
-                    wifiListEl.appendChild(item);
+                        // 确保位置正确（按排序后的顺序）
+                        const currentIndex = Array.from(wifiListEl.children).indexOf(existingItem);
+                        if (currentIndex !== index) {
+                            if (index >= wifiListEl.children.length) {
+                                wifiListEl.appendChild(existingItem);
+                            } else {
+                                wifiListEl.insertBefore(existingItem, wifiListEl.children[index]);
+                            }
+                        }
+                    } else {
+                        // 创建新项
+                        const item = document.createElement('div');
+                        item.className = 'wifi-item';
+                        item.setAttribute('data-ssid', net.ssid);
+                        item.innerHTML = itemHTML;
+
+                        item.addEventListener('click', () => {
+                            openConnectModal(net.ssid);
+                        });
+
+                        // 插入到正确位置
+                        if (index >= wifiListEl.children.length) {
+                            wifiListEl.appendChild(item);
+                        } else {
+                            wifiListEl.insertBefore(item, wifiListEl.children[index]);
+                        }
+
+                        existingItems.set(net.ssid, item);
+                    }
                 });
             })
             .catch(err => {
