@@ -77,18 +77,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const div = document.createElement('div');
                     div.className = 'status-item';
 
-                    let icon = '🔌';
-                    if (dev.type === 'wifi') icon = '📶';
+                    // 使用SVG图标替代emoji
+                    let iconClass = 'device-icon ethernet-icon';
+                    if (dev.type === 'wifi') iconClass = 'device-icon wifi-status-icon';
 
                     let statusText = dev.state;
                     if (dev.state === 'connected') {
-                        statusText = `<span style="color: green">已连接</span> (${dev.connection})`;
+                        statusText = `<span class="text-success">已连接</span> (${dev.connection})`;
                     } else if (dev.state === 'disconnected') {
-                        statusText = '<span style="color: red">未连接</span>';
+                        statusText = '<span class="text-error">未连接</span>';
                     }
 
                     div.innerHTML = `
-                        <div>${icon} <strong>${dev.device}</strong></div>
+                        <div><span class="${iconClass}"></span> <strong>${dev.device}</strong></div>
                         <div>${statusText}</div>
                         <div>${dev.ip || '-'}</div>
                     `;
@@ -96,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(err => {
-                statusContainer.innerText = '获取状态失败: ' + err;
+                statusContainer.innerHTML = '<div class="loading text-error">获取状态失败: ' + err + '</div>';
             });
     }
 
@@ -111,22 +112,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Sort by signal strength (bars) roughly
-                // The 'bars' field is like '****' or '__**'
-                // But better to rely on order from nmcli or signal
+                // 按信号强度排序
+                data.sort((a, b) => (b.signal || 0) - (a.signal || 0));
 
                 data.forEach(net => {
                     const item = document.createElement('div');
                     item.className = 'wifi-item';
 
                     const isSecure = net.security && net.security !== '--';
-                    const icon = isSecure ? '<div class="wifi-icon lock-icon"></div>' : '<div class="wifi-icon">🔓</div>';
+                    // 使用CSS绘制的图标
+                    const iconClass = isSecure ? 'wifi-icon wifi-signal secured' : 'wifi-icon wifi-signal unsecured';
+                    const icon = `<div class="${iconClass}"></div>`;
+
+                    // 生成信号强度条
+                    const signalBars = createSignalBars(net.signal || 0);
 
                     item.innerHTML = `
                         ${icon}
                         <div class="wifi-details">
                             <div class="wifi-ssid">${net.ssid}</div>
-                            <div class="wifi-info">信号: ${net.signal}% | 安全: ${net.security}</div>
+                            <div class="wifi-info">
+                                ${signalBars}
+                                <span>${net.signal}%</span>
+                                <span>•</span>
+                                <span>${net.security}</span>
+                            </div>
                         </div>
                         <div class="wifi-action">
                              <button class="btn btn-sm">连接</button>
@@ -141,8 +151,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(err => {
-                wifiListEl.innerText = '扫描失败: ' + err;
+                wifiListEl.innerHTML = '<div class="loading">扫描失败: ' + err + '</div>';
             });
+    }
+
+    // 创建信号强度可视化条
+    function createSignalBars(signal) {
+        const strength = Math.min(100, Math.max(0, signal));
+        let color;
+
+        if (strength >= 70) {
+            color = '#4caf50'; // 绿色 - 强
+        } else if (strength >= 40) {
+            color = '#ff9800'; // 橙色 - 中
+        } else {
+            color = '#f44336'; // 红色 - 弱
+        }
+
+        const bars = [];
+        for (let i = 0; i < 4; i++) {
+            const threshold = (i + 1) * 25;
+            const opacity = strength >= threshold ? 1 : 0.2;
+            bars.push(`<div class="signal-bar" style="background-color: ${color}; opacity: ${opacity};"></div>`);
+        }
+
+        return `<div class="signal-bars">${bars.join('')}</div>`;
     }
 
     function openConnectModal(ssid) {
