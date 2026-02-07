@@ -135,49 +135,32 @@ def scan_wifi():
     # We allow rescan.
     try:
         subprocess.run(['nmcli', 'device', 'wifi', 'rescan'], check=False) # Rescan might fail if too frequent
-        output = run_nmcli(['-t', '-f', 'SSID,SIGNAL,SECURITY,BARS', 'device', 'wifi', 'list'])
-        if output is None:
-             return jsonify({'error': 'Failed to scan WiFi'}), 500
         
-        networks = parse_wifi_list(output)
-        
-        # Filter out currently active connection
-        # Get active connection UUID or SSID
-        # nmcli -t -f NAME,TYPE,DEVICE,STATE connection show --active
-        active_ssid = None
-        try:
-             active_output = run_nmcli(['-t', '-f', 'NAME,TYPE,DEVICE,STATE', 'connection', 'show', '--active'])
-             if active_output:
-                for line in active_output.split('\n'):
-                    if 'wifi' in line and 'activated' in line:
-                         # NAME:TYPE:DEVICE:STATE
-                         parts = line.split(':')
-                         if len(parts) >= 1:
-                              # The connection name is often the SSID for wifi, but not always.
-                              # Better to check device status to get the exact SSID being used.
-                              pass
-        except:
-            pass
-
-        # Better way: check device status for the SSID
-        # nmcli -t -f DEVICE,TYPE,STATE,CONNECTION device status
-        # checking device details is more reliable for SSID
-        # nmcli -t -f GENERAL.CONNECTION,GENERAL.STATE device show wlan0
-        # Actually, let's just get the list of active SSIDs from `nmcli -t -f SSID device wifi list --rescan no | grep '*'` but parsing that is annoying.
-        
-        # Let's use the IN-USE field from the scan?
-        # The scan output we use currently is -f SSID,SIGNAL,SECURITY,BARS
-        # If we add IN-USE, we can filter it.
-        # IN-USE is '*' for connected.
-        
+        # 使用 IN-USE 字段来识别已连接的网络
+        # IN-USE 字段值为 '*' 表示当前正在使用
         output_with_inuse = run_nmcli(['-t', '-f', 'IN-USE,SSID,SIGNAL,SECURITY,BARS', 'device', 'wifi', 'list'])
         if output_with_inuse:
-             networks = parse_wifi_list_with_inuse(output_with_inuse)
-             # Filter out those with in_use=True
-             networks = [n for n in networks if not n.get('in_use')]
-             return jsonify(networks)
-             
-        # Fallback if the above fails (e.g. older nmcli?)
+            networks = parse_wifi_list_with_inuse(output_with_inuse)
+            # 过滤掉已连接的网络，并移除 in_use 字段
+            filtered_networks = []
+            for net in networks:
+                if not net.get('in_use', False):
+                    # 移除 in_use 字段，前端不需要这个信息
+                    filtered_net = {
+                        'ssid': net['ssid'],
+                        'signal': net['signal'],
+                        'security': net['security'],
+                        'bars': net['bars']
+                    }
+                    filtered_networks.append(filtered_net)
+            return jsonify(filtered_networks)
+              
+        # Fallback: 如果 IN-USE 字段不可用（旧版本 nmcli）
+        output = run_nmcli(['-t', '-f', 'SSID,SIGNAL,SECURITY,BARS', 'device', 'wifi', 'list'])
+        if output is None:
+            return jsonify({'error': 'Failed to scan WiFi'}), 500
+        
+        networks = parse_wifi_list(output)
         return jsonify(networks)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -217,6 +200,23 @@ def connect_wifi():
         return jsonify({'status': 'success'})
     except subprocess.CalledProcessError as e:
         return jsonify({'error': f"Failed to connect: {e.stderr}"}), 500
+
+@app.route('/api/wifi/disconnect', methods=['POST'])
+def disconnect_wifi():
+    """断开WiFi连接"""
+    data = request.json
+    device = data.get('device')
+    
+    if not device:
+        return jsonify({'error': 'Device is required'}), 400
+    
+    try:
+        # 使用 nmcli device disconnect 命令断开设备
+        subprocess.run(['nmcli', 'device', 'disconnect', device], 
+                      check=True, capture_output=True, text=True)
+        return jsonify({'status': 'success'})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'error': f"Failed to disconnect: {e.stderr}"}), 500
 
 @app.route('/api/status')
 def get_status():

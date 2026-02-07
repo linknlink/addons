@@ -34,6 +34,8 @@ temp/
 linknlink.token
 network-manager.tar.gz
 scripts/deploy_to_remote.sh
+scripts/quick_update.sh
+scripts/README.md
 
 # 构建目录
 build/

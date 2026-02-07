@@ -95,17 +95,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (dev.type === 'wifi') iconClass = 'device-icon wifi-status-icon';
 
                     let statusText = dev.state;
+                    let disconnectBtn = '';
+
                     if (dev.state === 'connected') {
                         statusText = `<span class="text-success">已连接</span> (${dev.connection})`;
+                        // 仅为WiFi连接添加断开按钮
+                        if (dev.type === 'wifi') {
+                            disconnectBtn = `<button class="btn btn-sm btn-disconnect" data-device="${dev.device}">断开</button>`;
+                        }
                     } else if (dev.state === 'disconnected') {
                         statusText = '<span class="text-error">未连接</span>';
                     }
 
                     div.innerHTML = `
                         <div><span class="${iconClass}"></span> <strong>${dev.device}</strong></div>
-                        <div>${statusText}</div>
+                        <div class="status-info-action">
+                            <span>${statusText}</span>
+                            ${disconnectBtn}
+                        </div>
                         <div>${dev.ip || '-'}</div>
                     `;
+
+                    // 为断开按钮添加事件监听
+                    const btnDisconnect = div.querySelector('.btn-disconnect');
+                    if (btnDisconnect) {
+                        btnDisconnect.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            disconnectWifi(dev.device);
+                        });
+                    }
+
                     statusContainer.appendChild(div);
                 });
             })
@@ -305,6 +324,34 @@ document.addEventListener('DOMContentLoaded', () => {
             .finally(() => {
                 connectConfirmBtn.disabled = false;
                 connectConfirmBtn.innerText = '连接';
+            });
+    }
+
+    function disconnectWifi(device) {
+        if (!confirm(`确定要断开 ${device} 的WiFi连接吗？`)) {
+            return;
+        }
+
+        fetch('/api/wifi/disconnect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ device: device })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert('断开失败: ' + data.error);
+                } else {
+                    alert('WiFi已断开');
+                    // 刷新状态和WiFi列表
+                    fetchStatus();
+                    setTimeout(scanWifi, 1000); // 延迟1秒后扫描，确保状态已更新
+                }
+            })
+            .catch(err => {
+                alert('请求错误: ' + err);
             });
     }
 

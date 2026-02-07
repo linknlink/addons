@@ -187,16 +187,26 @@ h1 {
 }
 
 .status-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 150px 1fr 250px;
+    gap: 1rem;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border-color);
-    gap: 10px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .status-item:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.status-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(124, 58, 237, 0.3);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
 }
 
 .status-item>div:first-child {
@@ -205,6 +215,47 @@ h1 {
     align-items: center;
     gap: 8px;
 }
+
+/* 状态信息和断开按钮布局 */
+.status-info-action {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.status-info-action span {
+    flex: 0 0 auto;
+}
+
+/* 状态区的IP显示 */
+.status-ip-action {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+}
+
+.status-ip-action span {
+    flex: 1;
+}
+
+/* 断开按钮样式 */
+.btn-disconnect {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    white-space: nowrap;
+}
+
+.btn-disconnect:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-1px);
+}
+
 
 /* WiFi 列表 */
 .wifi-list {
