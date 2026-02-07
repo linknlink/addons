@@ -20,9 +20,43 @@
 
 #### config.json 配置（开发时 Addon 目录需要）
 
-`config.json` 是开发时 Addon 目录需要的配置文件，定义了 Addon 的元数据、配置选项和 Schema。
+`config.json` 是 Haddons 插件系统的核心配置文件，定义了 Addon 的元数据、用户可配置选项和运行时行为。
 
-**注意**：Template 中不需要 `config.json`，因为 Haddons 服务会从 `upload_config.json` 和 `docker-compose.yml` 中获取所需信息。
+**必需字段**：
+- `name` - Addon 显示名称
+- `version` - 版本号（建议使用语义化版本，如 `"1.0.0"` 或 `"latest"`）
+- `slug` - Addon 唯一标识符（仅包含小写字母、数字和连字符）
+- `description` - Addon 简短描述
+
+**可选字段**：
+- `startup` - 启动优先级类型（`"application"`, `"system"`, `"services"`，默认 `"application"`）
+- `boot` - 开机启动模式（`"auto"` 或 `"manual"`，默认 `"manual"`）
+- `ingress` - 是否提供 Web 管理界面（默认 `false`）
+- `ingress_port` - Web UI 监听端口（当 `ingress` 为 `true` 时必需）
+- `options` - 定义 Addon 的默认配置值（用户可在 UI 中修改）
+- `schema` - 定义每个选项的数据类型（用于 UI 渲染和验证）
+
+**何时需要 config.json**：
+- **需要提供 Web 管理界面**：设置 `ingress` 和 `ingress_port` 字段
+- **需要用户可配置选项**：定义 `options` 和 `schema` 字段，用户可在 UI 的 Configuration 标签页中修改配置
+- **只有基本元数据**：如果不需要上述功能，可以只包含必需字段
+
+**环境变量自动注入**：
+- 系统会自动将 `options` 中的配置转换为环境变量传递给容器
+- 键名转换规则：小写转大写，非字母数字字符替换为下划线
+  - 例如：`mqtt_broker` → `MQTT_BROKER`，`log_level` → `LOG_LEVEL`
+
+**UI 行为**：
+- 如果定义了 `schema` 或 `options`，UI 会显示 **Configuration 标签页**，用户可以修改配置
+- 用户修改的配置会保存到 `data/{slug}_options.json`，并在下次启动时通过环境变量传递给容器
+
+**注意**：
+- **开发时**：根据 Addon 的需求决定是否需要 `config.json` 以及包含哪些字段
+  - 如果需要用户配置选项或 Web UI，必须创建 `config.json` 并定义相应字段
+  - 如果只需要基本元数据，只需包含必需字段即可
+- **Template 上传包中**：始终不需要 `config.json`，因为 Haddons 服务会从 `upload_config.json` 和 `docker-compose.yml` 中获取所需信息。环境变量可以直接在 `docker-compose.yml` 中配置
+
+**详细说明**：参考 [config-json-guide.md](file:///home/linknlink/1_codes/src/github.com/linknlink/addons/templates/addon-template/template/config-json-guide.md) 获取完整的配置规范和示例
 
 #### docker-compose.yml 配置
 
@@ -69,8 +103,12 @@ Haddons Template 是用于上传到 Haddons 服务的模板文件包。**注意*
   - **说明**：Template 必须使用 `image:` 而不是 `build:`，因此不需要构建文件
 
 - **`config.json`** - Haddons Addon 配置文件（**Template 中不需要**）
-  - 定义 Addon 的元数据、配置选项和 Schema
-  - **说明**：Template 中不需要，Haddons 服务会从 `upload_config.json` 和 `docker-compose.yml` 中获取所需信息
+  - 在开发时用于定义 Addon 的元数据（name, version, slug 等）、用户可配置选项（options, schema）、Web UI 配置（ingress, ingress_port）等
+  - **说明**：Template 中不需要，原因如下：
+    - 元数据信息已在 `upload_config.json` 中定义
+    - 容器配置（镜像、环境变量、端口等）已在 `docker-compose.yml` 中定义
+    - 如果需要环境变量，可以直接在 `docker-compose.yml` 的 `environment` 部分配置
+    - Haddons 服务会从这两个文件中提取所需的所有信息
 
 #### 推荐文件
 
