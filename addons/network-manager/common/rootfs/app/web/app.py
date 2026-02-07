@@ -68,6 +68,63 @@ def parse_wifi_list(output):
     
     return list(unique_networks.values())
 
+def parse_wifi_list_with_inuse(output):
+    lines = output.split('\n')
+    networks = []
+    if len(lines) < 1:
+        return networks
+    
+    # nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY,BARS device wifi list
+    # IN-USE is '*' or empty
+    
+    for line in lines:
+        if not line:
+            continue
+            
+        parts = line.split(':')
+        # IN-USE:SSID:SIGNAL:SECURITY:BARS
+        # But SSID can contain colons.
+        # We know IN-USE is first, SIGNAL/SECURITY/BARS are last 3.
+        # Everything in between is SSID.
+        
+        if len(parts) >= 5:
+            in_use = parts[0] == '*'
+            signal = parts[-3]
+            security = parts[-2]
+            bars = parts[-1]
+            ssid = ":".join(parts[1:-3])
+            
+            # Skip empty SSIDs
+            if not ssid:
+                continue
+            
+            networks.append({
+                'ssid': ssid,
+                'signal': signal,
+                'security': security,
+                'bars': bars,
+                'in_use': in_use
+            })
+            
+    # Deduplicate by SSID, keeping strongest signal
+    # If one is in_use, we should prefer keeping that info? 
+    # Actually, we filter out in_use later, so it matters less, 
+    # but let's keep the one that is in use if duplicates exist.
+    unique_networks = {}
+    for net in networks:
+        ssid = net['ssid']
+        if ssid not in unique_networks:
+            unique_networks[ssid] = net
+        else:
+            # If new one is in use, replace
+            if net['in_use']:
+                unique_networks[ssid] = net
+            # If current is not in use, and new one is stronger, replace
+            elif not unique_networks[ssid]['in_use'] and int(net['signal']) > int(unique_networks[ssid]['signal']):
+                unique_networks[ssid] = net
+                
+    return list(unique_networks.values())
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -83,6 +140,44 @@ def scan_wifi():
              return jsonify({'error': 'Failed to scan WiFi'}), 500
         
         networks = parse_wifi_list(output)
+        
+        # Filter out currently active connection
+        # Get active connection UUID or SSID
+        # nmcli -t -f NAME,TYPE,DEVICE,STATE connection show --active
+        active_ssid = None
+        try:
+             active_output = run_nmcli(['-t', '-f', 'NAME,TYPE,DEVICE,STATE', 'connection', 'show', '--active'])
+             if active_output:
+                for line in active_output.split('\n'):
+                    if 'wifi' in line and 'activated' in line:
+                         # NAME:TYPE:DEVICE:STATE
+                         parts = line.split(':')
+                         if len(parts) >= 1:
+                              # The connection name is often the SSID for wifi, but not always.
+                              # Better to check device status to get the exact SSID being used.
+                              pass
+        except:
+            pass
+
+        # Better way: check device status for the SSID
+        # nmcli -t -f DEVICE,TYPE,STATE,CONNECTION device status
+        # checking device details is more reliable for SSID
+        # nmcli -t -f GENERAL.CONNECTION,GENERAL.STATE device show wlan0
+        # Actually, let's just get the list of active SSIDs from `nmcli -t -f SSID device wifi list --rescan no | grep '*'` but parsing that is annoying.
+        
+        # Let's use the IN-USE field from the scan?
+        # The scan output we use currently is -f SSID,SIGNAL,SECURITY,BARS
+        # If we add IN-USE, we can filter it.
+        # IN-USE is '*' for connected.
+        
+        output_with_inuse = run_nmcli(['-t', '-f', 'IN-USE,SSID,SIGNAL,SECURITY,BARS', 'device', 'wifi', 'list'])
+        if output_with_inuse:
+             networks = parse_wifi_list_with_inuse(output_with_inuse)
+             # Filter out those with in_use=True
+             networks = [n for n in networks if not n.get('in_use')]
+             return jsonify(networks)
+             
+        # Fallback if the above fails (e.g. older nmcli?)
         return jsonify(networks)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -147,11 +242,11 @@ def get_status():
                     
                     # Filtering logic
                     # 1. Skip if type is explicitly unwanted
-                    if dev_type in ['bridge', 'loopback', 'tun', 'veth', 'dummy', 'bond', 'team']:
+                    if dev_type in ['bridge', 'loopback', 'tun', 'veth', 'dummy', 'bond', 'team', 'wifi-p2p']:
                         continue
                         
                     # 2. Skip based on name prefixes commonly used for virtual interfaces
-                    if dev_name.startswith(('docker', 'br-', 'veth', 'lo', 'virbr', 'tun', 'tap', 'vnet')):
+                    if dev_name.startswith(('docker', 'br-', 'veth', 'lo', 'virbr', 'tun', 'tap', 'vnet', 'p2p-dev-')):
                         continue
                         
                     # 3. Explicitly allow wifi, ethernet, gsm, cdma (and maybe others that are physical)
