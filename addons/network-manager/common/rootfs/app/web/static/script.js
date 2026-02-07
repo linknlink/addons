@@ -28,6 +28,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     connectConfirmBtn.addEventListener('click', connectToWifi);
 
+    // 密码显示/隐藏切换
+    const togglePasswordBtn = document.getElementById('toggle-password');
+    togglePasswordBtn.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type');
+        if (type === 'password') {
+            passwordInput.setAttribute('type', 'text');
+            togglePasswordBtn.setAttribute('aria-label', '隐藏密码');
+        } else {
+            passwordInput.setAttribute('type', 'password');
+            togglePasswordBtn.setAttribute('aria-label', '显示密码');
+        }
+    });
+
     ipMethodSelect.addEventListener('change', () => {
         if (ipMethodSelect.value === 'manual') {
             staticIpConfig.style.display = 'block';
