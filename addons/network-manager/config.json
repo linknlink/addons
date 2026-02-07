@@ -1,31 +1,32 @@
 {
-  "name": "Network Manager",
-  "version": "0.0.3",
-  "slug": "network-manager",
-  "description": "为 Ubuntu Server 系统提供 WiFi 网络管理功能的 Docker 容器应用",
-  "startup": "application",
-  "boot": "manual",
-  "ingress": false,
-  "options": {
-    "wifi_scan_interval": 30,
-    "auto_reconnect": true,
-    "default_ip_method": "dhcp",
-    "log_level": "info",
-    "initial_wifi_ssid": "",
-    "initial_wifi_password": "",
-    "initial_wifi_ip_address": "",
-    "initial_wifi_gateway": "",
-    "initial_wifi_dns": ""
-  },
-  "schema": {
-    "wifi_scan_interval": "int",
-    "auto_reconnect": "bool",
-    "default_ip_method": "str",
-    "log_level": "str",
-    "initial_wifi_ssid": "str",
-    "initial_wifi_password": "str",
-    "initial_wifi_ip_address": "str",
-    "initial_wifi_gateway": "str",
-    "initial_wifi_dns": "str"
-  }
+    "name": "Network Manager",
+    "version": "0.0.3",
+    "slug": "network-manager",
+    "description": "为 Ubuntu Server 系统提供 WiFi 网络管理功能的 Docker 容器应用",
+    "startup": "application",
+    "boot": "manual",
+    "ingress": true,
+    "ingress_port": 8201,
+    "options": {
+        "wifi_scan_interval": 30,
+        "auto_reconnect": true,
+        "default_ip_method": "dhcp",
+        "log_level": "info",
+        "initial_wifi_ssid": "",
+        "initial_wifi_password": "",
+        "initial_wifi_ip_address": "",
+        "initial_wifi_gateway": "",
+        "initial_wifi_dns": ""
+    },
+    "schema": {
+        "wifi_scan_interval": "int",
+        "auto_reconnect": "bool",
+        "default_ip_method": "str",
+        "log_level": "str",
+        "initial_wifi_ssid": "str",
+        "initial_wifi_password": "str",
+        "initial_wifi_ip_address": "str",
+        "initial_wifi_gateway": "str",
+        "initial_wifi_dns": "str"
+    }
 }

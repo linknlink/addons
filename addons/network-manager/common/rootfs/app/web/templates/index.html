@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Manager</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>网络配置</h1>
+            <button id="scan-btn" class="btn">刷新列表</button>
+        </header>
+
+        <section class="status-card">
+            <div id="status-container">
+                <div class="loading">正在加载状态...</div>
+            </div>
+        </section>
+
+        <section class="wifi-list" id="wifi-list">
+            <div class="loading">点击刷新加载 WiFi 列表...</div>
+        </section>
+    </div>
+
+    <!-- Connect Modal -->
+    <div id="connect-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">连接到 <span id="modal-ssid"></span></div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" placeholder="输入 WiFi 密码">
+            </div>
+            
+            <div class="form-group">
+                <label for="ip-method">IP 分配方式</label>
+                <select id="ip-method">
+                    <option value="auto">自动 (DHCP)</option>
+                    <option value="manual">手动 (静态 IP)</option>
+                </select>
+            </div>
+
+            <div id="static-ip-config" style="display: none;">
+                <div class="form-group">
+                    <label for="ip-address">IP 地址 (例如 192.168.1.100/24)</label>
+                    <input type="text" id="ip-address" placeholder="192.168.1.x/24">
+                </div>
+                <div class="form-group">
+                    <label for="gateway">网关</label>
+                    <input type="text" id="gateway" placeholder="192.168.1.1">
+                </div>
+                <div class="form-group">
+                    <label for="dns">DNS (可选，用逗号分隔)</label>
+                    <input type="text" id="dns" placeholder="8.8.8.8, 114.114.114.114">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="cancel-btn" class="btn btn-secondary">取消</button>
+                <button id="connect-confirm-btn" class="btn">连接</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

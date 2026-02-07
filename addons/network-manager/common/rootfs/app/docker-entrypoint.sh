@@ -58,6 +58,12 @@ fi
 
 log INFO "Network Manager 启动完成"
 
+# 启动 Web 管理界面
+log INFO "启动 Web 管理界面 (Port 8201)..."
+python3 /app/web/app.py &
+WEB_PID=$!
+log DEBUG "Web 服务 PID: $WEB_PID"
+
 # 如果提供了命令，执行它；否则保持容器运行
 if [ $# -eq 0 ]; then
     # 没有提供命令，保持容器运行

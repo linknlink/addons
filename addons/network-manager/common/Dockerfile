@@ -8,13 +8,16 @@ ENV LANG=C.UTF-8 \
 # 注意：容器只需要 nmcli 客户端，NetworkManager 服务在宿主机上运行
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        network-manager \
-        iputils-ping \
-        curl \
-        jq \
-        bash \
-        ca-certificates \
-        dbus && \
+    network-manager \
+    iputils-ping \
+    curl \
+    jq \
+    bash \
+    python3 \
+    python3-flask \
+    python3-pip \
+    ca-certificates \
+    dbus && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
