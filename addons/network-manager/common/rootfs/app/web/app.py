@@ -145,6 +145,20 @@ def get_status():
                     state = parts[2]
                     conn = parts[3]
                     
+                    # Filtering logic
+                    # 1. Skip if type is explicitly unwanted
+                    if dev_type in ['bridge', 'loopback', 'tun', 'veth', 'dummy', 'bond', 'team']:
+                        continue
+                        
+                    # 2. Skip based on name prefixes commonly used for virtual interfaces
+                    if dev_name.startswith(('docker', 'br-', 'veth', 'lo', 'virbr', 'tun', 'tap', 'vnet')):
+                        continue
+                        
+                    # 3. Explicitly allow wifi, ethernet, gsm, cdma (and maybe others that are physical)
+                    # or just rely on the exclusions above. 
+                    # Let's be safer: if it's not wifi/ethernet/gsm/cdma, double check.
+                    # But for now, the exclusion list is robust for the user's request.
+                    
                     # Get IP for this device
                     ip_info = query_ip(dev_name)
                     
