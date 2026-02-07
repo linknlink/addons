@@ -36,6 +36,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Auto-fill gateway based on IP address input
+    ipAddressInput.addEventListener('input', () => {
+        const ip = ipAddressInput.value;
+        const gateway = gatewayInput.value;
+
+        // Match standard IP format prefix (e.g. 192.168.1)
+        const match = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})/);
+
+        if (match) {
+            const subnetPrefix = `${match[1]}.${match[2]}.${match[3]}`;
+            const suggestedGateway = `${subnetPrefix}.1`;
+
+            // Logic: Fill if empty OR update if the existing gateway looks like a default (.1) 
+            // but belongs to a different subnet (stale guess)
+            if (!gateway) {
+                gatewayInput.value = suggestedGateway;
+            } else {
+                const parts = gateway.split('.');
+                if (parts.length === 4 && parts[3] === '1') {
+                    const gatewayPrefix = `${parts[0]}.${parts[1]}.${parts[2]}`;
+                    if (gatewayPrefix !== subnetPrefix) {
+                        gatewayInput.value = suggestedGateway;
+                    }
+                }
+            }
+        }
+    });
+
     function fetchStatus() {
         fetch('/api/status')
             .then(res => res.json())
