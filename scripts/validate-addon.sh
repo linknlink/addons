@@ -236,7 +236,7 @@ echo "检查 config.json 内容..."
 if [ -f "$ADDON_DIR/config.json" ]; then
     if command -v jq &> /dev/null; then
         # 检查必需字段
-        REQUIRED_FIELDS=("name" "version" "slug" "description" "arch" "startup" "boot")
+        REQUIRED_FIELDS=("name" "version" "slug" "description" "startup" "boot")
         for field in "${REQUIRED_FIELDS[@]}"; do
             if jq -e ".${field}" "$ADDON_DIR/config.json" > /dev/null 2>&1; then
                 echo -e "${GREEN}✓${NC} config.json 包含必需字段: ${field}"
@@ -245,6 +245,21 @@ if [ -f "$ADDON_DIR/config.json" ]; then
                 ERRORS=$((ERRORS + 1))
             fi
         done
+
+        # 检查 arch (可在 config.json 或 repository.json 中)
+        HAS_ARCH=false
+        if jq -e ".arch" "$ADDON_DIR/config.json" > /dev/null 2>&1; then
+            HAS_ARCH=true
+            echo -e "${GREEN}✓${NC} config.json 包含架构定义"
+        elif [ -f "$ADDON_DIR/repository.json" ] && jq -e ".arch" "$ADDON_DIR/repository.json" > /dev/null 2>&1; then
+            HAS_ARCH=true
+            echo -e "${GREEN}✓${NC} repository.json 包含架构定义"
+        fi
+
+        if [ "$HAS_ARCH" = false ]; then
+            echo -e "${RED}✗${NC} 缺少架构定义 (arch)，需要在 config.json 或 repository.json 中定义"
+            ERRORS=$((ERRORS + 1))
+        fi
         
         # 检查 slug 格式（应该是下划线分隔）
         SLUG=$(jq -r '.slug' "$ADDON_DIR/config.json" 2>/dev/null || echo "")

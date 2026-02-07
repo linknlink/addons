@@ -189,9 +189,9 @@ setup_buildx() {
 setup_buildx
 
 # 构建镜像
+# 构建镜像
+PLATFORMS=""
 for arch in "${ARCHES[@]}"; do
-    echo -e "${BLUE}构建架构: ${arch}${NC}"
-    
     # 映射架构名称
     case "$arch" in
         amd64)
@@ -209,45 +209,82 @@ for arch in "${ARCHES[@]}"; do
             ;;
     esac
     
-    # 构建命令
-    BUILD_CMD="docker buildx build --platform $DOCKER_ARCH -t ${IMAGE_TAG} -t ${IMAGE_LATEST} $BUILD_DIR"
-    
-    if [ "$PUSH" = true ]; then
-        BUILD_CMD="$BUILD_CMD --push"
+    if [ -z "$PLATFORMS" ]; then
+        PLATFORMS="$DOCKER_ARCH"
     else
-        # 如果不推送，需要加载到本地（但跨架构构建可能不支持 --load）
-        current_arch=$(uname -m)
-        case "$arch" in
-            amd64)
-                if [ "$current_arch" = "x86_64" ] || [ "$current_arch" = "amd64" ]; then
-                    BUILD_CMD="$BUILD_CMD --load"
-                fi
-                ;;
-        esac
+        PLATFORMS="$PLATFORMS,$DOCKER_ARCH"
     fi
-    
-    echo "执行: $BUILD_CMD"
+done
+
+if [ -z "$PLATFORMS" ]; then
+    echo -e "${RED}错误: 没有有效的构建架构${NC}"
+    exit 1
+fi
+
+echo -e "${BLUE}构建目标平台: ${PLATFORMS}${NC}"
+
+# 构建命令
+BUILD_CMD="docker buildx build --platform $PLATFORMS -t ${IMAGE_TAG} -t ${IMAGE_LATEST} $BUILD_DIR"
+
+if [ "$PUSH" = true ]; then
+    BUILD_CMD="$BUILD_CMD --push"
+    echo "执行 (Push): $BUILD_CMD"
     
     if eval "$BUILD_CMD"; then
-        echo -e "${GREEN}✓ 架构 ${arch} 构建成功${NC}"
+        echo -e "${GREEN}✓ 多架构镜像构建并推送成功${NC}"
+        echo -e "${GREEN}  Tag: ${IMAGE_TAG}${NC}"
+        echo -e "${GREEN}  Tag: ${IMAGE_LATEST}${NC}"
     else
-        echo -e "${RED}✗ 架构 ${arch} 构建失败${NC}"
-        current_arch=$(uname -m)
-        case "$arch" in
-            aarch64|armv7)
-                if [ "$current_arch" != "aarch64" ] && [ "$current_arch" != "armv7l" ] && [ "$current_arch" != "armv6l" ]; then
-                    echo -e "${YELLOW}提示: 跨架构构建失败，可能需要：${NC}"
-                    echo -e "${YELLOW}  1. 安装 QEMU: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes${NC}"
-                    echo -e "${YELLOW}  2. 创建 buildx builder: docker buildx create --name multiarch --driver docker-container --use${NC}"
-                    echo -e "${YELLOW}  3. 或者只构建当前架构: --arch $(echo $current_arch | sed 's/x86_64/amd64/')${NC}"
-                fi
-                ;;
-        esac
+        echo -e "${RED}✗ 构建或推送失败${NC}"
         exit 1
     fi
+else
+    # 本地构建 (非 Push 模式)
+    # 注意: docker buildx build --load 不支持多平台
+    # 所以如果没有 --push，通过 --load 只能构建当前架构
     
-    echo ""
-done
+    CURRENT_ARCH=$(uname -m)
+    TARGET_PLATFORM=""
+    
+    echo -e "${YELLOW}提示: 未启用 --push，仅构建当前架构并加载到本地${NC}"
+    
+    case "$CURRENT_ARCH" in
+        x86_64|amd64)
+            if [[ "$PLATFORMS" == *"linux/amd64"* ]]; then
+                TARGET_PLATFORM="linux/amd64"
+            fi
+            ;;
+        aarch64|arm64)
+            if [[ "$PLATFORMS" == *"linux/arm64"* ]]; then
+                TARGET_PLATFORM="linux/arm64"
+            fi
+            ;;
+        armv7l|armv7)
+            if [[ "$PLATFORMS" == *"linux/arm/v7"* ]]; then
+                TARGET_PLATFORM="linux/arm/v7"
+            fi
+            ;;
+    esac
+    
+    if [ -n "$TARGET_PLATFORM" ]; then
+        # 仅构建当前架构
+        local_build_cmd="docker buildx build --platform $TARGET_PLATFORM -t ${IMAGE_TAG} -t ${IMAGE_LATEST} --load $BUILD_DIR"
+        echo "执行 (Local): $local_build_cmd"
+        
+        if eval "$local_build_cmd"; then
+            echo -e "${GREEN}✓ 本地架构 ($TARGET_PLATFORM) 构建成功${NC}"
+            echo -e "${GREEN}  已加载镜像: ${IMAGE_TAG}${NC}"
+        else
+            echo -e "${RED}✗ 本地构建失败${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}错误: 当前系统架构 ($CURRENT_ARCH) 不在支持的目标列表内，无法进行本地构建${NC}"
+        echo -e "${YELLOW}支持的列表: $PLATFORMS${NC}"
+        echo -e "${YELLOW}请使用 --push 参数进行跨平台构建并推送到仓库${NC}"
+        exit 1
+    fi
+fi
 
 echo -e "${GREEN}✓ 构建完成！${NC}"
 echo ""
