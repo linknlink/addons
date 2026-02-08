@@ -1,7 +1,7 @@
 ARG BUILD_FROM=alpine:latest
 FROM ${BUILD_FROM}
 
-ENV LANG C.UTF-8
+ENV LANG=C.UTF-8
 
 # 安装依赖
 RUN apk add --no-cache \
@@ -13,7 +13,7 @@ RUN apk add --no-cache \
     ca-certificates
 
 # 安装 Flask
-RUN pip3 install --no-cache-dir flask requests
+RUN pip3 install --no-cache-dir --break-system-packages flask requests
 
 # 复制应用文件
 COPY rootfs /
