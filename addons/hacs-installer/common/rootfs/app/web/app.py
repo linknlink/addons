@@ -50,7 +50,12 @@ def run_script_thread(script_path, operation_name, success_msg):
 @app.route('/')
 def index():
     installed = check_hacs_installed()
-    return render_template('index.html', installed=installed)
+    
+    # Get host path for display
+    host_ha_config_path = os.environ.get('HOST_HA_CONFIG_PATH', '/usr/share/hassio/homeassistant')
+    target_path = os.path.join(host_ha_config_path, 'custom_components/hacs')
+    
+    return render_template('index.html', installed=installed, target_path=target_path)
 
 @app.route('/api/install', methods=['POST'])
 def install():

@@ -10,3 +10,4 @@ services:
       - ${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}:/homeassistant:rw
     environment:
       - HA_CONFIG_PATH=/homeassistant
+      - HOST_HA_CONFIG_PATH=${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}
