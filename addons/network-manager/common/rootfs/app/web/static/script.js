@@ -13,14 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelBtn = document.getElementById('cancel-btn');
     const connectConfirmBtn = document.getElementById('connect-confirm-btn');
 
-    // 断开确认弹窗元素
+    // Disconnect confirmation modal elements
     const disconnectModal = document.getElementById('disconnect-modal');
     const disconnectDeviceName = document.getElementById('disconnect-device-name');
     const disconnectCancelBtn = document.getElementById('disconnect-cancel-btn');
     const disconnectConfirmBtn = document.getElementById('disconnect-confirm-btn');
 
     let currentSsid = '';
-    let currentDisconnectDevice = ''; // 记录要断开的设备
+    let currentDisconnectDevice = ''; // Record device to disconnect
 
     // Load initial status
     fetchStatus();
@@ -35,16 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     connectConfirmBtn.addEventListener('click', connectToWifi);
 
-    // 密码显示/隐藏切换
+    // Password show/hide toggle
     const togglePasswordBtn = document.getElementById('toggle-password');
     togglePasswordBtn.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type');
         if (type === 'password') {
             passwordInput.setAttribute('type', 'text');
-            togglePasswordBtn.setAttribute('aria-label', '隐藏密码');
+            togglePasswordBtn.setAttribute('aria-label', 'Hide IP');
         } else {
             passwordInput.setAttribute('type', 'password');
-            togglePasswordBtn.setAttribute('aria-label', '显示密码');
+            togglePasswordBtn.setAttribute('aria-label', 'Show IP');
         }
     });
 
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 断开确认弹窗事件监听
+    // Disconnect modal event listeners
     disconnectCancelBtn.addEventListener('click', () => {
         disconnectModal.classList.remove('show');
         currentDisconnectDevice = '';
@@ -69,25 +69,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ========== Toast通知系统 ==========
+    // ========== Toast Notification System ==========
     const toastContainer = document.getElementById('toast-container');
     let toastIdCounter = 0;
 
     /**
-     * 显示Toast通知
-     * @param {string} message - 消息内容
-     * @param {string} type - 类型：success, error, warning, info
-     * @param {number} duration - 显示时长（毫秒），默认3000ms
+     * Show Toast notification
+     * @param {string} message - Message content
+     * @param {string} type - Type: success, error, warning, info
+     * @param {number} duration - Duration (ms), default 3000ms
      */
     function showToast(message, type = 'info', duration = 3000) {
         const toastId = `toast-${toastIdCounter++}`;
 
-        // 创建Toast元素
+        // Create Toast element
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.id = toastId;
 
-        // 根据类型选择图标
+        // Select icon based on type
         const icons = {
             success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
             error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="toast-content">
                 <div class="toast-message">${message}</div>
             </div>
-            <button class="toast-close" aria-label="关闭">
+            <button class="toast-close" aria-label="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -109,16 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
         `;
 
-        // 添加到容器
+        // Add to container
         toastContainer.appendChild(toast);
 
-        // 关闭按钮事件
+        // Close button event
         const closeBtn = toast.querySelector('.toast-close');
         closeBtn.addEventListener('click', () => {
             removeToast(toastId);
         });
 
-        // 自动移除
+        // Auto remove
         setTimeout(() => {
             removeToast(toastId);
         }, duration);
@@ -127,14 +127,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * 移除Toast通知
-     * @param {string} toastId - Toast的ID
+     * Remove Toast notification
+     * @param {string} toastId - Toast ID
      */
     function removeToast(toastId) {
         const toast = document.getElementById(toastId);
         if (toast && !toast.classList.contains('removing')) {
             toast.classList.add('removing');
-            // 等待动画结束后移除
+            // Wait for animation to end before removing
             setTimeout(() => {
                 if (toast.parentNode) {
                     toast.parentNode.removeChild(toast);
@@ -177,14 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 statusContainer.innerHTML = '';
                 if (data.length === 0) {
-                    statusContainer.innerHTML = '<div class="status-item">未检测到网络设备</div>';
+                    statusContainer.innerHTML = '<div class="status-item">No network devices detected</div>';
                     return;
                 }
                 data.forEach(dev => {
                     const div = document.createElement('div');
                     div.className = 'status-item';
 
-                    // 使用SVG图标替代emoji
+                    // Use SVG icons instead of emoji
                     let iconClass = 'device-icon ethernet-icon';
                     if (dev.type === 'wifi') iconClass = 'device-icon wifi-status-icon';
 
@@ -192,13 +192,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     let disconnectBtn = '';
 
                     if (dev.state === 'connected') {
-                        statusText = `<span class="text-success">已连接</span> (${dev.connection})`;
-                        // 仅为WiFi连接添加断开按钮
+                        statusText = `<span class="text-success">Connected</span> (${dev.connection})`;
+                        // Add disconnect button only for WiFi
                         if (dev.type === 'wifi') {
-                            disconnectBtn = `<button class="btn btn-sm btn-disconnect" data-device="${dev.device}">断开</button>`;
+                            disconnectBtn = `<button class="btn btn-sm btn-disconnect" data-device="${dev.device}">Disconnect</button>`;
                         }
                     } else if (dev.state === 'disconnected') {
-                        statusText = '<span class="text-error">未连接</span>';
+                        statusText = '<span class="text-error">Disconnected</span>';
                     }
 
                     div.innerHTML = `
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div>${dev.ip || '-'}</div>
                     `;
 
-                    // 为断开按钮添加事件监听
+                    // Add event listener for disconnect button
                     const btnDisconnect = div.querySelector('.btn-disconnect');
                     if (btnDisconnect) {
                         btnDisconnect.addEventListener('click', (e) => {
@@ -223,30 +223,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(err => {
-                statusContainer.innerHTML = '<div class="loading text-error">获取状态失败: ' + err + '</div>';
+                statusContainer.innerHTML = '<div class="loading text-error">Failed to get status: ' + err + '</div>';
             });
     }
 
     function scanWifi() {
-        // 显示加载状态（如果列表为空）
+        // Show loading state (if list is empty)
         const hasExistingItems = wifiListEl.querySelectorAll('.wifi-item').length > 0;
         if (!hasExistingItems) {
-            wifiListEl.innerHTML = '<div class="loading">正在扫描...</div>';
+            wifiListEl.innerHTML = '<div class="loading">Scanning...</div>';
         }
 
         fetch('/api/wifi/scan')
             .then(res => res.json())
             .then(data => {
-                // 如果没有WiFi网络
+                // If no WiFi networks
                 if (data.length === 0) {
-                    wifiListEl.innerHTML = '<div class="loading">未发现 WiFi 网络</div>';
+                    wifiListEl.innerHTML = '<div class="loading">No WiFi networks found</div>';
                     return;
                 }
 
-                // 按信号强度排序
+                // Sort by signal strength
                 data.sort((a, b) => (b.signal || 0) - (a.signal || 0));
 
-                // 差异化更新：创建现有项的Map
+                // Differential update: Create Map of existing items
                 const existingItems = new Map();
                 wifiListEl.querySelectorAll('.wifi-item').forEach(item => {
                     const ssid = item.getAttribute('data-ssid');
@@ -255,10 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // 跟踪哪些SSID仍然存在
+                // Track which SSIDs still exist
                 const currentSSIDs = new Set(data.map(net => net.ssid));
 
-                // 移除不再存在的WiFi网络
+                // Remove WiFi networks that no longer exist
                 existingItems.forEach((item, ssid) => {
                     if (!currentSSIDs.has(ssid)) {
                         item.remove();
@@ -266,13 +266,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // 移除加载提示（如果存在）
+                // Remove loading indicator (if exists)
                 const loadingDiv = wifiListEl.querySelector('.loading');
                 if (loadingDiv) {
                     loadingDiv.remove();
                 }
 
-                // 更新或创建WiFi项
+                // Update or create WiFi items
                 data.forEach((net, index) => {
                     const existingItem = existingItems.get(net.ssid);
 
@@ -293,17 +293,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         <div class="wifi-action">
-                             <button class="btn btn-sm">连接</button>
+                             <button class="btn btn-sm">Connect</button>
                         </div>
                     `;
 
                     if (existingItem) {
-                        // 更新现有项（仅当内容变化时）
+                        // Update existing item (only when content changes)
                         if (existingItem.innerHTML !== itemHTML) {
                             existingItem.innerHTML = itemHTML;
                         }
 
-                        // 确保位置正确（按排序后的顺序）
+                        // Ensure correct position (in sorted order)
                         const currentIndex = Array.from(wifiListEl.children).indexOf(existingItem);
                         if (currentIndex !== index) {
                             if (index >= wifiListEl.children.length) {
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
                     } else {
-                        // 创建新项
+                        // Create new item
                         const item = document.createElement('div');
                         item.className = 'wifi-item';
                         item.setAttribute('data-ssid', net.ssid);
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             openConnectModal(net.ssid);
                         });
 
-                        // 插入到正确位置
+                        // Insert at correct position
                         if (index >= wifiListEl.children.length) {
                             wifiListEl.appendChild(item);
                         } else {
@@ -335,21 +335,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(err => {
-                wifiListEl.innerHTML = '<div class="loading">扫描失败: ' + err + '</div>';
+                wifiListEl.innerHTML = '<div class="loading">Scan failed: ' + err + '</div>';
             });
     }
 
-    // 创建信号强度可视化条
+    // Create signal strength visualization bars
     function createSignalBars(signal) {
         const strength = Math.min(100, Math.max(0, signal));
         let color;
 
         if (strength >= 70) {
-            color = '#4caf50'; // 绿色 - 强
+            color = '#4caf50'; // Green - Strong
         } else if (strength >= 40) {
-            color = '#ff9800'; // 橙色 - 中
+            color = '#ff9800'; // Orange - Medium
         } else {
-            color = '#f44336'; // 红色 - 弱
+            color = '#f44336'; // Red - Weak
         }
 
         const bars = [];
@@ -387,13 +387,13 @@ document.addEventListener('DOMContentLoaded', () => {
             payload.dns = dnsInput.value;
 
             if (!payload.ip || !payload.gateway) {
-                showToast("请输入 IP 地址和网关", "warning", 3000);
+                showToast("Please enter IP address and gateway", "warning", 3000);
                 return;
             }
         }
 
         connectConfirmBtn.disabled = true;
-        connectConfirmBtn.innerText = '连接中...';
+        connectConfirmBtn.innerText = 'Connecting...';
 
         fetch('/api/wifi/connect', {
             method: 'POST',
@@ -405,33 +405,33 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
-                    showToast('连接失败: ' + data.error, 'error', 4000);
+                    showToast('Connection failed: ' + data.error, 'error', 4000);
                 } else {
-                    showToast('连接命令已发送，请等待连接建立...', 'success', 3000);
+                    showToast('Connection command sent, waiting for connection...', 'success', 3000);
                     modal.classList.remove('show');
                     setTimeout(fetchStatus, 5000); // Wait a bit then refresh status
                 }
             })
             .catch(err => {
-                showToast('请求错误: ' + err, 'error', 4000);
+                showToast('Request error: ' + err, 'error', 4000);
             })
             .finally(() => {
                 connectConfirmBtn.disabled = false;
-                connectConfirmBtn.innerText = '连接';
+                connectConfirmBtn.innerText = 'Connect';
             });
     }
 
     function disconnectWifi(device) {
-        // 使用自定义弹窗而非原生confirm
+        // Use custom modal instead of native confirm
         currentDisconnectDevice = device;
         disconnectDeviceName.textContent = device;
         disconnectModal.classList.add('show');
     }
 
     function performDisconnect(device) {
-        // 禁用确认按钮，显示加载状态
+        // Disable confirm button, show loading state
         disconnectConfirmBtn.disabled = true;
-        disconnectConfirmBtn.innerText = '断开中...';
+        disconnectConfirmBtn.innerText = 'Disconnecting...';
 
         fetch('/api/wifi/disconnect', {
             method: 'POST',
@@ -443,21 +443,21 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 disconnectConfirmBtn.disabled = false;
-                disconnectConfirmBtn.innerText = '确认断开';
+                disconnectConfirmBtn.innerText = 'Confirm';
                 currentDisconnectDevice = '';
 
                 if (data.error) {
-                    showToast('断开失败: ' + data.error, 'error', 4000);
+                    showToast('Disconnect failed: ' + data.error, 'error', 4000);
                 } else {
-                    // 刷新状态和WiFi列表
+                    // Refresh status and WiFi list
                     fetchStatus();
-                    setTimeout(scanWifi, 1000); // 延迟1秒后扫描，确保状态已更新
+                    setTimeout(scanWifi, 1000); // Delay 1 second before scanning to ensure status is updated
                 }
             })
             .catch(err => {
                 disconnectConfirmBtn.disabled = false;
-                disconnectConfirmBtn.innerText = '确认断开';
-                alert('请求错误: ' + err);
+                disconnectConfirmBtn.innerText = 'Confirm';
+                alert('Request error: ' + err);
             });
     }
 

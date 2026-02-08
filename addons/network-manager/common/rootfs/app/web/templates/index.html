@@ -1,71 +1,71 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>网络配置管理器</title>
+    <title>Network Manager</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
     <div class="container">
         <header>
-            <h1>网络配置</h1>
-            <button id="scan-btn" class="btn">刷新列表</button>
+            <h1>Network Configuration</h1>
+            <button id="scan-btn" class="btn">Refresh List</button>
         </header>
 
         <section class="status-card">
             <div id="status-container">
-                <div class="loading">正在加载状态...</div>
+                <div class="loading">Loading status...</div>
             </div>
         </section>
 
         <section class="wifi-list" id="wifi-list">
-            <div class="loading">点击刷新加载 WiFi 列表...</div>
+            <div class="loading">Click Refresh to load WiFi list...</div>
         </section>
     </div>
 
     <!-- Connect Modal -->
     <div id="connect-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">连接到 <span id="modal-ssid"></span></div>
+            <div class="modal-header">Connect to <span id="modal-ssid"></span></div>
             <div class="form-group">
-                <label for="password">密码</label>
+                <label for="password">Password</label>
                 <div class="password-input-wrapper">
-                    <input type="password" id="password" placeholder="输入 WiFi 密码">
-                    <button type="button" class="toggle-password" id="toggle-password" aria-label="显示密码">
+                    <input type="password" id="password" placeholder="Enter WiFi password">
+                    <button type="button" class="toggle-password" id="toggle-password" aria-label="Show password">
                         <span class="eye-icon"></span>
                     </button>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="ip-method">IP 分配方式</label>
+                <label for="ip-method">IP Method</label>
                 <select id="ip-method">
-                    <option value="auto">自动 (DHCP)</option>
-                    <option value="manual">手动 (静态 IP)</option>
+                    <option value="auto">Automatic (DHCP)</option>
+                    <option value="manual">Manual (Static IP)</option>
                 </select>
             </div>
 
             <div id="static-ip-config" style="display: none;">
                 <div class="form-group">
-                    <label for="ip-address">IP 地址 (例如 192.168.1.100/24)</label>
+                    <label for="ip-address">IP Address (e.g. 192.168.1.100/24)</label>
                     <input type="text" id="ip-address" placeholder="192.168.1.x/24">
                 </div>
                 <div class="form-group">
-                    <label for="gateway">网关</label>
+                    <label for="gateway">Gateway</label>
                     <input type="text" id="gateway" placeholder="192.168.1.1">
                 </div>
                 <div class="form-group">
-                    <label for="dns">DNS (可选，用逗号分隔)</label>
+                    <label for="dns">DNS (Optional, comma separated)</label>
                     <input type="text" id="dns" placeholder="8.8.8.8, 114.114.114.114">
                 </div>
             </div>
 
             <div class="modal-actions">
-                <button id="cancel-btn" class="btn btn-secondary">取消</button>
-                <button id="connect-confirm-btn" class="btn">连接</button>
+                <button id="cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button id="connect-confirm-btn" class="btn">Connect</button>
             </div>
         </div>
     </div>
@@ -76,16 +76,17 @@
             <div class="disconnect-modal-header">
                 <div class="disconnect-icon"></div>
                 <div>
-                    <div class="disconnect-modal-title">确认断开连接</div>
-                    <div class="disconnect-modal-subtitle">断开 <span id="disconnect-device-name"></span> 的WiFi连接？</div>
+                    <div class="disconnect-modal-title">Confirm Disconnect</div>
+                    <div class="disconnect-modal-subtitle">Disconnect from <span id="disconnect-device-name"></span>?
+                    </div>
                 </div>
             </div>
             <div class="disconnect-modal-message">
-                断开后，您将失去通过此WiFi网络的互联网连接。您可以随时重新连接。
+                You will lose internet connectivity via this WiFi network. You can reconnect at any time.
             </div>
             <div class="modal-actions">
-                <button id="disconnect-cancel-btn" class="btn btn-secondary">取消</button>
-                <button id="disconnect-confirm-btn" class="btn btn-danger">确认断开</button>
+                <button id="disconnect-cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button id="disconnect-confirm-btn" class="btn btn-danger">Confirm</button>
             </div>
         </div>
     </div>

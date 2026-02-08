@@ -136,16 +136,16 @@ def scan_wifi():
     try:
         subprocess.run(['nmcli', 'device', 'wifi', 'rescan'], check=False) # Rescan might fail if too frequent
         
-        # 使用 IN-USE 字段来识别已连接的网络
-        # IN-USE 字段值为 '*' 表示当前正在使用
+        # Use IN-USE field to identify connected networks
+        # IN-USE field value '*' indicates currently in use
         output_with_inuse = run_nmcli(['-t', '-f', 'IN-USE,SSID,SIGNAL,SECURITY,BARS', 'device', 'wifi', 'list'])
         if output_with_inuse:
             networks = parse_wifi_list_with_inuse(output_with_inuse)
-            # 过滤掉已连接的网络，并移除 in_use 字段
+            # Filter out connected networks and remove in_use field
             filtered_networks = []
             for net in networks:
                 if not net.get('in_use', False):
-                    # 移除 in_use 字段，前端不需要这个信息
+                    # Remove in_use field, frontend doesn't need this info
                     filtered_net = {
                         'ssid': net['ssid'],
                         'signal': net['signal'],
@@ -155,7 +155,7 @@ def scan_wifi():
                     filtered_networks.append(filtered_net)
             return jsonify(filtered_networks)
               
-        # Fallback: 如果 IN-USE 字段不可用（旧版本 nmcli）
+        # Fallback: if IN-USE field is unavailable (older nmcli versions)
         output = run_nmcli(['-t', '-f', 'SSID,SIGNAL,SECURITY,BARS', 'device', 'wifi', 'list'])
         if output is None:
             return jsonify({'error': 'Failed to scan WiFi'}), 500
@@ -167,13 +167,13 @@ def scan_wifi():
 
 @app.route('/api/wifi/connect', methods=['POST'])
 def connect_wifi():
-    """连接WiFi网络
+    """Connect to WiFi network
     
-    对于DHCP模式：直接使用 nmcli device wifi connect 命令连接
-    对于静态IP模式：采用两步操作来避免参数错误
-        1. 先以DHCP模式连接WiFi建立连接
-        2. 然后修改连接配置为静态IP
-        3. 重新激活连接应用新配置
+    For DHCP mode: use nmcli device wifi connect directly
+    For Static IP mode: use two-step operation to avoid parameter errors
+        1. Connect with DHCP first to establish connection
+        2. Modify connection configuration to static IP
+        3. Reactivate connection to apply new config
     """
     data = request.json
     ssid = data.get('ssid')
@@ -185,71 +185,71 @@ def connect_wifi():
 
     try:
         if method == 'manual':
-            # 静态IP模式：两步操作
+            # Static IP mode: two-step operation
             ip = data.get('ip')
             gateway = data.get('gateway')
             dns = data.get('dns')
             
             if not ip or not gateway:
-                return jsonify({'error': 'IP和网关是静态IP配置的必填项'}), 400
+                return jsonify({'error': 'IP and Gateway are required for static IP configuration'}), 400
             
-            # 步骤1：先以DHCP模式连接WiFi
+            # Step 1: Connect with DHCP first
             cmd_connect = ['nmcli', 'device', 'wifi', 'connect', ssid]
             if password:
                 cmd_connect.extend(['password', password])
             
             result = subprocess.run(cmd_connect, capture_output=True, text=True, check=True)
             
-            # 步骤2：修改连接配置为静态IP
-            # 注意：连接名称通常与SSID相同
+            # Step 2: Modify connection to static IP
+            # Note: connection name is usually the SSID
             connection_name = ssid
             
-            # 修改IP配置方法为manual
+            # Modify IP method to manual
             subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
                           'ipv4.method', 'manual'], 
                           check=True, capture_output=True, text=True)
             
-            # 设置IP地址
+            # Set IP address
             subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
                           'ipv4.addresses', ip], 
                           check=True, capture_output=True, text=True)
             
-            # 设置网关
+            # Set Gateway
             subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
                           'ipv4.gateway', gateway], 
                           check=True, capture_output=True, text=True)
             
-            # 设置DNS（如果提供）
+            # Set DNS (if provided)
             if dns:
-                # 移除空格并处理逗号分隔的DNS
+                # Remove spaces and handle comma separated DNS
                 dns_clean = dns.replace(' ', '')
                 subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
                               'ipv4.dns', dns_clean], 
                               check=True, capture_output=True, text=True)
             
-            # 步骤3：重新激活连接以应用新配置
+            # Step 3: Reactivate connection to apply new config
             subprocess.run(['nmcli', 'connection', 'up', connection_name], 
                           check=True, capture_output=True, text=True)
             
-            return jsonify({'status': 'success', 'message': '已连接并配置静态IP'})
+            return jsonify({'status': 'success', 'message': 'Connected and configured with static IP'})
         else:
-            # DHCP模式：直接连接
+            # DHCP mode: connect directly
             cmd = ['nmcli', 'device', 'wifi', 'connect', ssid]
             if password:
                 cmd.extend(['password', password])
             
             subprocess.run(cmd, check=True, capture_output=True, text=True)
-            return jsonify({'status': 'success', 'message': '已连接'})
+            return jsonify({'status': 'success', 'message': 'Connected'})
             
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr if e.stderr else str(e)
-        return jsonify({'error': f"连接失败: {error_msg}"}), 500
+        return jsonify({'error': f"Connection failed: {error_msg}"}), 500
     except Exception as e:
-        return jsonify({'error': f"未知错误: {str(e)}"}), 500
+        return jsonify({'error': f"Unknown error: {str(e)}"}), 500
 
 @app.route('/api/wifi/disconnect', methods=['POST'])
 def disconnect_wifi():
-    """断开WiFi连接"""
+    """Disconnect WiFi connection"""
     data = request.json
     device = data.get('device')
     
@@ -257,7 +257,7 @@ def disconnect_wifi():
         return jsonify({'error': 'Device is required'}), 400
     
     try:
-        # 使用 nmcli device disconnect 命令断开设备
+        # Use nmcli device disconnect command
         subprocess.run(['nmcli', 'device', 'disconnect', device], 
                       check=True, capture_output=True, text=True)
         return jsonify({'status': 'success'})
