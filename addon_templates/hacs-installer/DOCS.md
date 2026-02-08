@@ -1,43 +1,43 @@
-# HACS Installer 使用说明
+# HACS Installer User Guide
 
-## 简介
-HACS Installer 是一个辅助工具，用于帮助您快速将 HACS (Home Assistant Community Store) 安装到您的 Home Assistant 实例中。
+## Introduction
+HACS Installer is a utility tool designed to help you quickly install HACS (Home Assistant Community Store) into your Home Assistant instance.
 
-## 安装步骤
+## Installation Steps
 
-1. **配置路径**：在安装本 Addon之前，请务必确认您的 Home Assistant 配置路径。默认路径为 `/usr/share/hassio/homeassistant`。如果您的 Home Assistant 安装在不同位置，请在配置中修改 `HA_CONFIG_PATH`。
-2. **启动服务**：安装并启动 HACS Installer。
-3. **访问界面**：点击"访问服务"或直接访问 `http://<您的IP>:8202`。
+1. **Configure Path**: Before installing this Addon, please ensure your Home Assistant configuration path. The default path is `/usr/share/hassio/homeassistant`. If your Home Assistant is installed in a different location, please modify `HA_CONFIG_PATH` in the configuration.
+2. **Start Service**: Install and start HACS Installer.
+3. **Access Interface**: Click "Access Service" or visit `http://<Your-IP>:8202` directly.
 
-## 操作指南
+## Operation Guide
 
-1. **检查状态**：打开 Web 界面后，工具会自动检查是否已安装 HACS。
-2. **开始安装**：如果未安装，点击"开始安装"按钮。
-   - 工具会自动从 GitHub 下载最新版本的 HACS。
-   - 解压并安装到 `custom_components/hacs` 目录。
-3. **完成安装**：安装完成后，界面会提示成功。
+1. **Check Status**: After opening the Web interface, the tool will automatically check if HACS is installed.
+2. **Start Installation**: If not installed, click the "Install HACS" button.
+   - The tool will automatically download the latest version of HACS from GitHub.
+   - Unzip and install it to the `custom_components/hacs` directory.
+3. **Complete Installation**: After installation is complete, the interface will prompt success.
 
-## 卸载 HACS
+## Uninstall HACS
 
-如果需要卸载 HACS，请在 Web 界面点击"卸载 HACS"按钮。
-- 工具会移除 `custom_components/hacs` 目录。
-- 卸载后同样需要重启 Home Assistant。
+If you need to uninstall HACS, please click the "Uninstall HACS" button on the Web interface.
+- The tool will remove the `custom_components/hacs` directory.
+- You still need to restart Home Assistant after uninstallation.
 
-## 后续步骤
+## Next Steps
 
-安装完成后，您需要：
-1. **重启 Home Assistant**：必须重启才能使 HACS 生效。
-2. **添加集成**：
-   - 进入 Home Assistant -> 配置 -> 设备与服务 -> 添加集成。
-   - 搜索 "HACS"。
-   - 按照提示完成 GitHub 授权。
+After installation is complete, you need to:
+1. **Restart Home Assistant**: You must restart for HACS to take effect.
+2. **Add Integration**:
+   - Go to Home Assistant -> Settings -> Devices & Services -> Add Integration.
+   - Search for "HACS".
+   - Follow the prompts to complete GitHub authorization.
 
-## 常见问题
+## FAQ
 
-**Q: 安装失败怎么办？**
-A: 请检查：
-- Home Assistant 配置路径是否正确挂载。
-- 网络是否正常（需要访问 GitHub）。
+**Q: What if installation fails?**
+A: Please check:
+- Whether the Home Assistant configuration path is mounted correctly.
+- Whether the network is normal (needs access to GitHub).
 
-**Q: 安装后找不到 HACS 集成？**
-A: 请确保已重启 Home Assistant，并清除浏览器缓存。
+**Q: Cannot find HACS integration after installation?**
+A: Please ensure you have restarted Home Assistant and cleared your browser cache.

@@ -1,7 +1,7 @@
 {
-  "name": "hacs-installer",
+  "name": "HACS Installer",
   "addonid": "0",
-  "addondescription": "hacs-installer 旨在为 Ubuntu Server 系统提供相关能力。",
+  "addondescription": "One-click installation and management for HACS (Home Assistant Community Store), simplifying the Home Assistant integration installation process.",
   "version": "1.0.0",
   "visiturl": "",
   "issupportupdate": 0,
@@ -10,6 +10,6 @@
   "candisableservice": 1,
   "releasestatus": 1,
   "order": 100,
-  "display_name": "hacs-installer",
-  "id": "hacs-installer"
+  "display_name": "HACS Installer",
+  "id": "hacs_installer"
 }
