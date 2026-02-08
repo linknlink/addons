@@ -1,6 +1,6 @@
 services:
   hacs_installer:
-    image: linknlink/addons:hacs-installer
+    image: ghcr.io/linknlink/hacs_installer:latest
     container_name: hacs_installer
     restart: unless-stopped
     ports:
