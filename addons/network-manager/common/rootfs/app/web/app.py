@@ -167,6 +167,14 @@ def scan_wifi():
 
 @app.route('/api/wifi/connect', methods=['POST'])
 def connect_wifi():
+    """连接WiFi网络
+    
+    对于DHCP模式：直接使用 nmcli device wifi connect 命令连接
+    对于静态IP模式：采用两步操作来避免参数错误
+        1. 先以DHCP模式连接WiFi建立连接
+        2. 然后修改连接配置为静态IP
+        3. 重新激活连接应用新配置
+    """
     data = request.json
     ssid = data.get('ssid')
     password = data.get('password')
@@ -175,31 +183,69 @@ def connect_wifi():
     if not ssid:
         return jsonify({'error': 'SSID is required'}), 400
 
-    cmd = ['device', 'wifi', 'connect', ssid]
-    if password:
-        cmd.extend(['password', password])
-        
-    if method == 'manual':
-        ip = data.get('ip')
-        gateway = data.get('gateway')
-        dns = data.get('dns')
-        
-        if not ip or not gateway:
-             return jsonify({'error': 'IP and Gateway are required for manual configuration'}), 400
-             
-        cmd.extend(['ipv4.method', 'manual'])
-        cmd.extend(['ipv4.addresses', ip])
-        cmd.extend(['ipv4.gateway', gateway])
-        if dns:
-            cmd.extend(['ipv4.dns', dns])
-    else:
-        cmd.extend(['ipv4.method', 'auto'])
-
     try:
-        subprocess.run(['nmcli'] + cmd, check=True, capture_output=True, text=True)
-        return jsonify({'status': 'success'})
+        if method == 'manual':
+            # 静态IP模式：两步操作
+            ip = data.get('ip')
+            gateway = data.get('gateway')
+            dns = data.get('dns')
+            
+            if not ip or not gateway:
+                return jsonify({'error': 'IP和网关是静态IP配置的必填项'}), 400
+            
+            # 步骤1：先以DHCP模式连接WiFi
+            cmd_connect = ['nmcli', 'device', 'wifi', 'connect', ssid]
+            if password:
+                cmd_connect.extend(['password', password])
+            
+            result = subprocess.run(cmd_connect, capture_output=True, text=True, check=True)
+            
+            # 步骤2：修改连接配置为静态IP
+            # 注意：连接名称通常与SSID相同
+            connection_name = ssid
+            
+            # 修改IP配置方法为manual
+            subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
+                          'ipv4.method', 'manual'], 
+                          check=True, capture_output=True, text=True)
+            
+            # 设置IP地址
+            subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
+                          'ipv4.addresses', ip], 
+                          check=True, capture_output=True, text=True)
+            
+            # 设置网关
+            subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
+                          'ipv4.gateway', gateway], 
+                          check=True, capture_output=True, text=True)
+            
+            # 设置DNS（如果提供）
+            if dns:
+                # 移除空格并处理逗号分隔的DNS
+                dns_clean = dns.replace(' ', '')
+                subprocess.run(['nmcli', 'connection', 'modify', connection_name, 
+                              'ipv4.dns', dns_clean], 
+                              check=True, capture_output=True, text=True)
+            
+            # 步骤3：重新激活连接以应用新配置
+            subprocess.run(['nmcli', 'connection', 'up', connection_name], 
+                          check=True, capture_output=True, text=True)
+            
+            return jsonify({'status': 'success', 'message': '已连接并配置静态IP'})
+        else:
+            # DHCP模式：直接连接
+            cmd = ['nmcli', 'device', 'wifi', 'connect', ssid]
+            if password:
+                cmd.extend(['password', password])
+            
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            return jsonify({'status': 'success', 'message': '已连接'})
+            
     except subprocess.CalledProcessError as e:
-        return jsonify({'error': f"Failed to connect: {e.stderr}"}), 500
+        error_msg = e.stderr if e.stderr else str(e)
+        return jsonify({'error': f"连接失败: {error_msg}"}), 500
+    except Exception as e:
+        return jsonify({'error': f"未知错误: {str(e)}"}), 500
 
 @app.route('/api/wifi/disconnect', methods=['POST'])
 def disconnect_wifi():

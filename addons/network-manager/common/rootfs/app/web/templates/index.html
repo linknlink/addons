@@ -70,6 +70,26 @@
         </div>
     </div>
 
+    <!-- Disconnect Confirmation Modal -->
+    <div id="disconnect-modal" class="modal">
+        <div class="modal-content disconnect-modal-content">
+            <div class="disconnect-modal-header">
+                <div class="disconnect-icon"></div>
+                <div>
+                    <div class="disconnect-modal-title">确认断开连接</div>
+                    <div class="disconnect-modal-subtitle">断开 <span id="disconnect-device-name"></span> 的WiFi连接？</div>
+                </div>
+            </div>
+            <div class="disconnect-modal-message">
+                断开后，您将失去通过此WiFi网络的互联网连接。您可以随时重新连接。
+            </div>
+            <div class="modal-actions">
+                <button id="disconnect-cancel-btn" class="btn btn-secondary">取消</button>
+                <button id="disconnect-confirm-btn" class="btn btn-danger">确认断开</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/script.js"></script>
 </body>
 

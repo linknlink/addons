@@ -13,7 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelBtn = document.getElementById('cancel-btn');
     const connectConfirmBtn = document.getElementById('connect-confirm-btn');
 
+    // 断开确认弹窗元素
+    const disconnectModal = document.getElementById('disconnect-modal');
+    const disconnectDeviceName = document.getElementById('disconnect-device-name');
+    const disconnectCancelBtn = document.getElementById('disconnect-cancel-btn');
+    const disconnectConfirmBtn = document.getElementById('disconnect-confirm-btn');
+
     let currentSsid = '';
+    let currentDisconnectDevice = ''; // 记录要断开的设备
 
     // Load initial status
     fetchStatus();
@@ -46,6 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
             staticIpConfig.style.display = 'block';
         } else {
             staticIpConfig.style.display = 'none';
+        }
+    });
+
+    // 断开确认弹窗事件监听
+    disconnectCancelBtn.addEventListener('click', () => {
+        disconnectModal.classList.remove('show');
+        currentDisconnectDevice = '';
+    });
+
+    disconnectConfirmBtn.addEventListener('click', () => {
+        if (currentDisconnectDevice) {
+            performDisconnect(currentDisconnectDevice);
+            disconnectModal.classList.remove('show');
         }
     });
 
@@ -328,9 +348,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function disconnectWifi(device) {
-        if (!confirm(`确定要断开 ${device} 的WiFi连接吗？`)) {
-            return;
-        }
+        // 使用自定义弹窗而非原生confirm
+        currentDisconnectDevice = device;
+        disconnectDeviceName.textContent = device;
+        disconnectModal.classList.add('show');
+    }
+
+    function performDisconnect(device) {
+        // 禁用确认按钮，显示加载状态
+        disconnectConfirmBtn.disabled = true;
+        disconnectConfirmBtn.innerText = '断开中...';
 
         fetch('/api/wifi/disconnect', {
             method: 'POST',
@@ -341,16 +368,21 @@ document.addEventListener('DOMContentLoaded', () => {
         })
             .then(res => res.json())
             .then(data => {
+                disconnectConfirmBtn.disabled = false;
+                disconnectConfirmBtn.innerText = '确认断开';
+                currentDisconnectDevice = '';
+
                 if (data.error) {
                     alert('断开失败: ' + data.error);
                 } else {
-                    alert('WiFi已断开');
                     // 刷新状态和WiFi列表
                     fetchStatus();
                     setTimeout(scanWifi, 1000); // 延迟1秒后扫描，确保状态已更新
                 }
             })
             .catch(err => {
+                disconnectConfirmBtn.disabled = false;
+                disconnectConfirmBtn.innerText = '确认断开';
                 alert('请求错误: ' + err);
             });
     }
