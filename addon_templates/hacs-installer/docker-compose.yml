@@ -1,0 +1,11 @@
+services:
+  hacs_installer:
+    image: linknlink/addons:hacs-installer
+    container_name: hacs_installer
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    volumes:
+      - ${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}:/homeassistant:rw
+    environment:
+      - HA_CONFIG_PATH=/homeassistant

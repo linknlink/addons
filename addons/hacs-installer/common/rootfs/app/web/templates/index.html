@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACS Installer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .status.installed {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.not-installed {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #0063cc;
+        }
+
+        button:disabled {
+            background-color: #bfbfbf;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .progress {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #007aff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>HACS 安装器</h1>
+
+        <div id="status-box" class="status {{ 'installed' if installed else 'not-installed' }}">
+            {{ 'HACS 已安装' if installed else 'HACS 未安装' }}
+        </div>
+
+        <p class="description">
+            此工具将自动把 HACS 安装到您的 Home Assistant 中。
+            <br>
+            <small>目标路径: /homeassistant/custom_components/hacs</small>
+        </p>
+
+        <button id="install-btn" onclick="startInstall()" {{ 'disabled' if installed else '' }}>
+            {{ '重新安装' if installed else '开始安装' }}
+        </button>
+
+        <div id="progress" class="progress">
+            <div class="spinner"></div>
+            <span id="progress-text">正在安装...</span>
+        </div>
+
+        <div id="result-message" class="message"></div>
+    </div>
+
+    <script>
+        function startInstall() {
+            const btn = document.getElementById('install-btn');
+            const progress = document.getElementById('progress');
+            const resultMsg = document.getElementById('result-message');
+
+            btn.disabled = true;
+            progress.style.display = 'block';
+            resultMsg.textContent = '';
+
+            fetch('/api/install', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        pollStatus();
+                    } else {
+                        showResult('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    showResult('error', '请求失败: ' + error);
+                });
+        }
+
+        function pollStatus() {
+            const progressText = document.getElementById('progress-text');
+
+            const interval = setInterval(() => {
+                fetch('/api/status')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            clearInterval(interval);
+                            showResult('success', data.message);
+                            document.getElementById('status-box').className = 'status installed';
+                            document.getElementById('status-box').textContent = 'HACS 已安装';
+                        } else if (data.status === 'error') {
+                            clearInterval(interval);
+                            showResult('error', data.message);
+                        } else if (data.status === 'installing') {
+                            progressText.textContent = data.message;
+                        }
+                    });
+            }, 1000);
+        }
+
+        function showResult(type, message) {
+            const progress = document.getElementById('progress');
+            const resultMsg = document.getElementById('result-message');
+            const btn = document.getElementById('install-btn');
+
+            progress.style.display = 'none';
+            resultMsg.textContent = message;
+            resultMsg.style.color = type === 'error' ? '#dc2626' : '#059669';
+            btn.disabled = false;
+        }
+    </script>
+</body>
+
+</html>
