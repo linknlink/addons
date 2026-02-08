@@ -10,37 +10,42 @@ HA_CONFIG_PATH = os.environ.get('HA_CONFIG_PATH', '/homeassistant')
 CUSTOM_COMPONENTS_DIR = os.path.join(HA_CONFIG_PATH, 'custom_components')
 HACS_DIR = os.path.join(CUSTOM_COMPONENTS_DIR, 'hacs')
 
-install_status = {
-    'status': 'idle', # idle, installing, success, error
-    'message': ''
+# operation_status: idle, installing, uninstalling, success, error
+operation_state = {
+    'status': 'idle', 
+    'message': '',
+    'operation': None # 'install' or 'uninstall'
 }
 
 def check_hacs_installed():
     return os.path.exists(os.path.join(HACS_DIR, '__init__.py'))
 
-def install_hacs_thread():
-    global install_status
-    install_status['status'] = 'installing'
-    install_status['message'] = '正在下载 HACS...'
+def run_script_thread(script_path, operation_name, success_msg):
+    global operation_state
+    operation_state['status'] = 'running'
+    operation_state['operation'] = operation_name
+    operation_state['message'] = f'正在执行{operation_name}...'
     
     try:
-        # 运行安装脚本
-        process = subprocess.Popen(['/bin/bash', '/app/install-hacs.sh'], 
+        # 运行脚本
+        process = subprocess.Popen(['/bin/bash', script_path], 
                                    stdout=subprocess.PIPE, 
                                    stderr=subprocess.PIPE,
                                    text=True)
         stdout, stderr = process.communicate()
         
         if process.returncode == 0:
-            install_status['status'] = 'success'
-            install_status['message'] = 'HACS 安装成功！请重启 Home Assistant。'
+            operation_state['status'] = 'success'
+            operation_state['message'] = success_msg
         else:
-            install_status['status'] = 'error'
-            install_status['message'] = f'安装失败: {stderr}'
+            operation_state['status'] = 'error'
+            operation_state['message'] = f'{operation_name}失败: {stderr}'
+            if not stderr and stdout:
+                 operation_state['message'] = f'{operation_name}失败: {stdout}'
             
     except Exception as e:
-        install_status['status'] = 'error'
-        install_status['message'] = f'发生错误: {str(e)}'
+        operation_state['status'] = 'error'
+        operation_state['message'] = f'发生错误: {str(e)}'
 
 @app.route('/')
 def index():
@@ -49,18 +54,32 @@ def index():
 
 @app.route('/api/install', methods=['POST'])
 def install():
-    global install_status
-    if install_status['status'] == 'installing':
-        return jsonify({'status': 'error', 'message': '安装正在进行中'})
+    global operation_state
+    if operation_state['status'] == 'running':
+        return jsonify({'status': 'error', 'message': '当前有任务正在进行中'})
     
-    thread = threading.Thread(target=install_hacs_thread)
+    thread = threading.Thread(target=run_script_thread, 
+                            args=('/app/install-hacs.sh', 'Install', 'HACS 安装成功！请重启 Home Assistant。'))
     thread.start()
     
     return jsonify({'status': 'success', 'message': '开始安装'})
 
+@app.route('/api/uninstall', methods=['POST'])
+def uninstall():
+    global operation_state
+    if operation_state['status'] == 'running':
+        return jsonify({'status': 'error', 'message': '当前有任务正在进行中'})
+
+    thread = threading.Thread(target=run_script_thread, 
+                            args=('/app/uninstall-hacs.sh', 'Uninstall', 'HACS 卸载成功！请重启 Home Assistant。'))
+    thread.start()
+    
+    return jsonify({'status': 'success', 'message': '开始卸载'})
+
 @app.route('/api/status')
 def status():
-    return jsonify(install_status)
+    return jsonify(operation_state)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8099)
+    # Port changed to 8202
+    app.run(host='0.0.0.0', port=8202)

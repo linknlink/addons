@@ -49,9 +49,13 @@
             color: #991b1b;
         }
 
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
         button {
-            background-color: #007aff;
-            color: white;
             border: none;
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
@@ -61,8 +65,22 @@
             width: 100%;
         }
 
-        button:hover {
+        .btn-install {
+            background-color: #007aff;
+            color: white;
+        }
+
+        .btn-install:hover {
             background-color: #0063cc;
+        }
+
+        .btn-uninstall {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-uninstall:hover {
+            background-color: #dc2626;
         }
 
         button:disabled {
@@ -74,6 +92,8 @@
             margin-top: 1rem;
             font-size: 0.875rem;
             color: #6b7280;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .progress {
@@ -103,41 +123,50 @@
 
 <body>
     <div class="container">
-        <h1>HACS 安装器</h1>
+        <h1>HACS Installer</h1>
 
         <div id="status-box" class="status {{ 'installed' if installed else 'not-installed' }}">
             {{ 'HACS 已安装' if installed else 'HACS 未安装' }}
         </div>
 
         <p class="description">
-            此工具将自动把 HACS 安装到您的 Home Assistant 中。
+            管理您的 Home Assistant 社区商店 (HACS)。
             <br>
             <small>目标路径: /homeassistant/custom_components/hacs</small>
         </p>
 
-        <button id="install-btn" onclick="startInstall()" {{ 'disabled' if installed else '' }}>
-            {{ '重新安装' if installed else '开始安装' }}
-        </button>
+        <div class="btn-group">
+            <button id="install-btn" class="btn-install" onclick="startOperation('install')" {{ 'disabled' if installed
+                else '' }}>
+                {{ '重新安装' if installed else '安装 HACS' }}
+            </button>
+            <button id="uninstall-btn" class="btn-uninstall" onclick="startOperation('uninstall')" {{ '' if installed
+                else 'disabled' }}>
+                卸载 HACS
+            </button>
+        </div>
 
         <div id="progress" class="progress">
             <div class="spinner"></div>
-            <span id="progress-text">正在安装...</span>
+            <span id="progress-text">正在处理...</span>
         </div>
 
         <div id="result-message" class="message"></div>
     </div>
 
     <script>
-        function startInstall() {
-            const btn = document.getElementById('install-btn');
+        function startOperation(op) {
+            const installBtn = document.getElementById('install-btn');
+            const uninstallBtn = document.getElementById('uninstall-btn');
             const progress = document.getElementById('progress');
             const resultMsg = document.getElementById('result-message');
 
-            btn.disabled = true;
+            installBtn.disabled = true;
+            uninstallBtn.disabled = true;
             progress.style.display = 'block';
             resultMsg.textContent = '';
 
-            fetch('/api/install', { method: 'POST' })
+            fetch('/api/' + op, { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
@@ -161,12 +190,27 @@
                         if (data.status === 'success') {
                             clearInterval(interval);
                             showResult('success', data.message);
-                            document.getElementById('status-box').className = 'status installed';
-                            document.getElementById('status-box').textContent = 'HACS 已安装';
+                            // Update UI state based on operation
+                            if (data.operation === 'Install') {
+                                document.getElementById('status-box').className = 'status installed';
+                                document.getElementById('status-box').textContent = 'HACS 已安装';
+                                document.getElementById('install-btn').textContent = '重新安装';
+                                document.getElementById('install-btn').disabled = false;
+                                document.getElementById('uninstall-btn').disabled = false;
+                            } else if (data.operation === 'Uninstall') {
+                                document.getElementById('status-box').className = 'status not-installed';
+                                document.getElementById('status-box').textContent = 'HACS 未安装';
+                                document.getElementById('install-btn').textContent = '安装 HACS';
+                                document.getElementById('install-btn').disabled = false;
+                                document.getElementById('uninstall-btn').disabled = true;
+                            }
+
                         } else if (data.status === 'error') {
                             clearInterval(interval);
                             showResult('error', data.message);
-                        } else if (data.status === 'installing') {
+                            // Re-enable buttons based on current guessed state (reload page ideally)
+                            setTimeout(() => location.reload(), 2000);
+                        } else if (data.status === 'running') {
                             progressText.textContent = data.message;
                         }
                     });
@@ -176,12 +220,10 @@
         function showResult(type, message) {
             const progress = document.getElementById('progress');
             const resultMsg = document.getElementById('result-message');
-            const btn = document.getElementById('install-btn');
 
             progress.style.display = 'none';
             resultMsg.textContent = message;
             resultMsg.style.color = type === 'error' ? '#dc2626' : '#059669';
-            btn.disabled = false;
         }
     </script>
 </body>

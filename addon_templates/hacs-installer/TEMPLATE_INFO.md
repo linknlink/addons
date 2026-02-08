@@ -2,7 +2,7 @@
 
 此 template 由脚本自动生成自 addon: `hacs-installer`
 
-生成时间: 2026-02-08 16:53:12
+生成时间: 2026-02-08 17:18:01
 源版本: 1.0.0
 模板来源: `addons/hacs-installer/template/`
 

@@ -23,7 +23,8 @@ WORKDIR /app
 
 # 设置权限
 RUN chmod +x /app/docker-entrypoint.sh && \
-    chmod +x /app/install-hacs.sh
+    chmod +x /app/install-hacs.sh && \
+    chmod +x /app/uninstall-hacs.sh
 
 # 运行脚本
 ENTRYPOINT [ "/bin/bash", "/app/docker-entrypoint.sh" ]

@@ -6,7 +6,7 @@ services:
     container_name: hacs_installer
     restart: unless-stopped
     ports:
-      - "8099:8099"
+      - "8202:8202"
     volumes:
       - ${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}:/homeassistant:rw
     environment:

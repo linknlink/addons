@@ -6,6 +6,7 @@ HACS Installer 是一个用于简化 HACS (Home Assistant Community Store) 安�
 
 - 检测当前 Home Assistant 实例是否安装了 HACS
 - 一键下载并安装最新版本的 HACS 到 Home Assistant 的 `custom_components` 目录
+- 支持一键卸载 HACS
 - 支持从 GitHub 官方源下载
 
 ## 使用说明

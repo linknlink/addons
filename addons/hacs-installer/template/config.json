@@ -1,0 +1,19 @@
+{
+    "name": "HACS Installer",
+    "version": "1.0.0",
+    "slug": "hacs_installer",
+    "description": "一键安装和管理 HACS (Home Assistant Community Store)",
+    "arch": [
+        "aarch64",
+        "amd64",
+        "armv7"
+    ],
+    "startup": "services",
+    "boot": "manual",
+    "options": {
+        "ha_config_path": "/usr/share/hassio/homeassistant"
+    },
+    "schema": {
+        "ha_config_path": "str"
+    }
+}

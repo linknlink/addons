@@ -1,6 +1,6 @@
 {
     "name": "HACS Installer",
-    "addonid": "hacs_installer",
+    "addonid": "0",
     "addondescription": "一键安装和管理 HACS (Home Assistant Community Store)，简化 Home Assistant 集成安装过程。",
     "version": "1.0.0",
     "visiturl": "",

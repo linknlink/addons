@@ -7,7 +7,7 @@ HACS Installer 是一个辅助工具，用于帮助您快速将 HACS (Home Assis
 
 1. **配置路径**：在安装本 Addon之前，请务必确认您的 Home Assistant 配置路径。默认路径为 `/usr/share/hassio/homeassistant`。如果您的 Home Assistant 安装在不同位置，请在配置中修改 `HA_CONFIG_PATH`。
 2. **启动服务**：安装并启动 HACS Installer。
-3. **访问界面**：点击"访问服务"或直接访问 `http://<您的IP>:8099`。
+3. **访问界面**：点击"访问服务"或直接访问 `http://<您的IP>:8202`。
 
 ## 操作指南
 
@@ -16,6 +16,12 @@ HACS Installer 是一个辅助工具，用于帮助您快速将 HACS (Home Assis
    - 工具会自动从 GitHub 下载最新版本的 HACS。
    - 解压并安装到 `custom_components/hacs` 目录。
 3. **完成安装**：安装完成后，界面会提示成功。
+
+## 卸载 HACS
+
+如果需要卸载 HACS，请在 Web 界面点击"卸载 HACS"按钮。
+- 工具会移除 `custom_components/hacs` 目录。
+- 卸载后同样需要重启 Home Assistant。
 
 ## 后续步骤
 
