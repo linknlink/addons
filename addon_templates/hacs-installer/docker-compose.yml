@@ -3,8 +3,7 @@ services:
     image: ghcr.io/linknlink/hacs_installer:latest
     container_name: hacs_installer
     restart: unless-stopped
-    ports:
-      - "8202:8202"
+    network_mode: host
     volumes:
       - ${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}:/homeassistant:rw
     environment:

@@ -5,8 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: hacs_installer
     restart: unless-stopped
-    ports:
-      - "8202:8202"
+    network_mode: host # 使用宿主机网络模式，绕过 iptables 限制
     volumes:
       - ${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}:/homeassistant:rw
     environment:
