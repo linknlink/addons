@@ -11,20 +11,9 @@ services:
       - AUTO_RECONNECT=true
       - DEFAULT_IP_METHOD=dhcp
       - LOG_LEVEL=info
-      # 初始 WiFi 连接配置（可选）
-      # - INITIAL_WIFI_SSID=YourWiFiName
-      # - INITIAL_WIFI_PASSWORD=YourPassword
-      # 静态 IP 配置（如果使用静态 IP）
-      # - INITIAL_WIFI_IP_ADDRESS=192.168.1.100/24
-      # - INITIAL_WIFI_GATEWAY=192.168.1.1
-      # - INITIAL_WIFI_DNS=8.8.8.8 8.8.4.4
     volumes:
-      - ./common/rootfs/runtime/data:/data
       - /etc/NetworkManager:/etc/NetworkManager:ro
       - /var/lib/NetworkManager:/var/lib/NetworkManager
       # D-Bus socket，用于与宿主机的 NetworkManager 通信
       - /run/dbus:/run/dbus:ro
       - /var/run/dbus:/var/run/dbus:ro
-    cap_add:
-      - NET_ADMIN
-      - SYS_ADMIN
