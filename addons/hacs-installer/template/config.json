@@ -10,6 +10,8 @@
     ],
     "startup": "services",
     "boot": "manual",
+    "ingress": true,
+    "ingress_port": 8202,
     "options": {
         "ha_config_path": "/usr/share/hassio/homeassistant"
     },
