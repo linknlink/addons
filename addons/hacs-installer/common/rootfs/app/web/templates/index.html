@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -126,29 +126,29 @@
         <h1>HACS Installer</h1>
 
         <div id="status-box" class="status {{ 'installed' if installed else 'not-installed' }}">
-            {{ 'HACS 已安装' if installed else 'HACS 未安装' }}
+            {{ 'HACS Installed' if installed else 'HACS Not Installed' }}
         </div>
 
         <p class="description">
-            管理您的 Home Assistant 社区商店 (HACS)。
+            Manage your Home Assistant Community Store (HACS).
             <br>
-            <small>目标路径: {{ target_path }}</small>
+            <small>Target Path: {{ target_path }}</small>
         </p>
 
         <div class="btn-group">
             <button id="install-btn" class="btn-install" onclick="startOperation('install')" {{ 'disabled' if installed
                 else '' }}>
-                {{ '重新安装' if installed else '安装 HACS' }}
+                {{ 'Reinstall' if installed else 'Install HACS' }}
             </button>
             <button id="uninstall-btn" class="btn-uninstall" onclick="startOperation('uninstall')" {{ '' if installed
                 else 'disabled' }}>
-                卸载 HACS
+                Uninstall HACS
             </button>
         </div>
 
         <div id="progress" class="progress">
             <div class="spinner"></div>
-            <span id="progress-text">正在处理...</span>
+            <span id="progress-text">Processing...</span>
         </div>
 
         <div id="result-message" class="message"></div>
@@ -176,7 +176,7 @@
                     }
                 })
                 .catch(error => {
-                    showResult('error', '请求失败: ' + error);
+                    showResult('error', 'Request failed: ' + error);
                 });
         }
 
@@ -193,14 +193,14 @@
                             // Update UI state based on operation
                             if (data.operation === 'Install') {
                                 document.getElementById('status-box').className = 'status installed';
-                                document.getElementById('status-box').textContent = 'HACS 已安装';
-                                document.getElementById('install-btn').textContent = '重新安装';
+                                document.getElementById('status-box').textContent = 'HACS Installed';
+                                document.getElementById('install-btn').textContent = 'Reinstall';
                                 document.getElementById('install-btn').disabled = false;
                                 document.getElementById('uninstall-btn').disabled = false;
                             } else if (data.operation === 'Uninstall') {
                                 document.getElementById('status-box').className = 'status not-installed';
-                                document.getElementById('status-box').textContent = 'HACS 未安装';
-                                document.getElementById('install-btn').textContent = '安装 HACS';
+                                document.getElementById('status-box').textContent = 'HACS Not Installed';
+                                document.getElementById('install-btn').textContent = 'Install HACS';
                                 document.getElementById('install-btn').disabled = false;
                                 document.getElementById('uninstall-btn').disabled = true;
                             }

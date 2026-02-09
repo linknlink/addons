@@ -15,30 +15,30 @@ HA_CONFIG_PATH="${HA_CONFIG_PATH:-/homeassistant}"
 CUSTOM_COMPONENTS_DIR="$HA_CONFIG_PATH/custom_components"
 HACS_DIR="$CUSTOM_COMPONENTS_DIR/hacs"
 
-log_info "开始 HACS 卸载流程..."
-log_info "Home Assistant 配置目录: $HA_CONFIG_PATH"
+log_info "Starting HACS uninstallation process..."
+log_info "Home Assistant config directory: $HA_CONFIG_PATH"
 
 # 1. 检查配置目录是否存在
 if [ ! -d "$HA_CONFIG_PATH" ]; then
-    log_error "未找到 Home Assistant 配置目录: $HA_CONFIG_PATH"
+    log_error "Home Assistant config directory not found: $HA_CONFIG_PATH"
     exit 1
 fi
 
 # 2. 检查 HACS 是否存在
 if [ ! -d "$HACS_DIR" ]; then
-    log_warn "未检测到 HACS 安装，无需卸载。"
+    log_warn "HACS installation not detected, no need to uninstall."
     exit 0
 fi
 
 # 3. 执行卸载
-log_info "正在移除 HACS 目录..."
+log_info "Removing HACS directory..."
 if rm -rf "$HACS_DIR"; then
-    log_info "HACS 目录已移除。"
+    log_info "HACS directory removed."
 else
-    log_error "移除失败，请检查权限。"
+    log_error "Removal failed, please check permissions."
     exit 1
 fi
 
-log_info "HACS 卸载成功！"
-log_info "请重启 Home Assistant 清除残留配置。"
+log_info "HACS uninstalled successfully!"
+log_info "Please restart Home Assistant to clear residual configuration."
 exit 0

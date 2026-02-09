@@ -24,7 +24,7 @@ def run_script_thread(script_path, operation_name, success_msg):
     global operation_state
     operation_state['status'] = 'running'
     operation_state['operation'] = operation_name
-    operation_state['message'] = f'正在执行{operation_name}...'
+    operation_state['message'] = f'Executing {operation_name}...'
     
     try:
         # 运行脚本
@@ -39,13 +39,13 @@ def run_script_thread(script_path, operation_name, success_msg):
             operation_state['message'] = success_msg
         else:
             operation_state['status'] = 'error'
-            operation_state['message'] = f'{operation_name}失败: {stderr}'
+            operation_state['message'] = f'{operation_name} failed: {stderr}'
             if not stderr and stdout:
-                 operation_state['message'] = f'{operation_name}失败: {stdout}'
+                 operation_state['message'] = f'{operation_name} failed: {stdout}'
             
     except Exception as e:
         operation_state['status'] = 'error'
-        operation_state['message'] = f'发生错误: {str(e)}'
+        operation_state['message'] = f'Error occurred: {str(e)}'
 
 @app.route('/')
 def index():
@@ -61,25 +61,25 @@ def index():
 def install():
     global operation_state
     if operation_state['status'] == 'running':
-        return jsonify({'status': 'error', 'message': '当前有任务正在进行中'})
+        return jsonify({'status': 'error', 'message': 'Task already in progress'})
     
     thread = threading.Thread(target=run_script_thread, 
-                            args=('/app/install-hacs.sh', 'Install', 'HACS 安装成功！请重启 Home Assistant。'))
+                            args=('/app/install-hacs.sh', 'Install', 'HACS installed successfully! Please restart Home Assistant.'))
     thread.start()
     
-    return jsonify({'status': 'success', 'message': '开始安装'})
+    return jsonify({'status': 'success', 'message': 'Installation started'})
 
 @app.route('/api/uninstall', methods=['POST'])
 def uninstall():
     global operation_state
     if operation_state['status'] == 'running':
-        return jsonify({'status': 'error', 'message': '当前有任务正在进行中'})
+        return jsonify({'status': 'error', 'message': 'Task already in progress'})
 
     thread = threading.Thread(target=run_script_thread, 
-                            args=('/app/uninstall-hacs.sh', 'Uninstall', 'HACS 卸载成功！请重启 Home Assistant。'))
+                            args=('/app/uninstall-hacs.sh', 'Uninstall', 'HACS uninstalled successfully! Please restart Home Assistant.'))
     thread.start()
     
-    return jsonify({'status': 'success', 'message': '开始卸载'})
+    return jsonify({'status': 'success', 'message': 'Uninstallation started'})
 
 @app.route('/api/status')
 def status():
