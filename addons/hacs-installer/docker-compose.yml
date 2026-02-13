@@ -8,6 +8,7 @@ services:
     network_mode: host # 使用宿主机网络模式，绕过 iptables 限制
     volumes:
       - ${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}:/homeassistant:rw
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - HA_CONFIG_PATH=/homeassistant
       - HOST_HA_CONFIG_PATH=${HA_CONFIG_PATH:-/usr/share/hassio/homeassistant}

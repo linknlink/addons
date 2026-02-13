@@ -83,6 +83,15 @@
             background-color: #dc2626;
         }
 
+        .btn-restart {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .btn-restart:hover {
+            background-color: #d97706;
+        }
+
         button:disabled {
             background-color: #bfbfbf;
             cursor: not-allowed;
@@ -118,6 +127,107 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* 自定义确认弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 14px;
+            padding: 1.5rem;
+            max-width: 340px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalIn 0.2s ease-out;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-message {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 1.25rem;
+            line-height: 1.4;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.15s;
+        }
+
+        .modal-btn-cancel {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .modal-btn-cancel:hover {
+            background-color: #d1d5db;
+        }
+
+        .modal-btn-confirm {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background-color: #dc2626;
+        }
+
+        .modal-btn-confirm.warn {
+            background-color: #f59e0b;
+        }
+
+        .modal-btn-confirm.warn:hover {
+            background-color: #d97706;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 12px 0;
+        }
     </style>
 </head>
 
@@ -136,13 +246,21 @@
         </p>
 
         <div class="btn-group">
-            <button id="install-btn" class="btn-install" onclick="startOperation('install')" {{ 'disabled' if installed
-                else '' }}>
+            <button id="install-btn" class="btn-install"
+                onclick="{{ 'showConfirm(\'Reinstall HACS\', \'This will remove the current HACS and download the latest version. Continue?\', function() { startOperation(\'install\'); })' if installed else 'startOperation(\'install\')' }}">
                 {{ 'Reinstall' if installed else 'Install HACS' }}
             </button>
-            <button id="uninstall-btn" class="btn-uninstall" onclick="startOperation('uninstall')" {{ '' if installed
-                else 'disabled' }}>
+            <button id="uninstall-btn" class="btn-uninstall"
+                onclick="showConfirm('Uninstall HACS', 'This will completely remove HACS from your Home Assistant. Continue?', function() { startOperation('uninstall'); })"
+                {{ '' if installed else 'disabled' }}>
                 Uninstall HACS
+            </button>
+
+            <hr class="divider">
+
+            <button id="restart-btn" class="btn-restart"
+                onclick="showConfirm('Restart Home Assistant', 'This will restart the Home Assistant container. All automations will be temporarily interrupted. Continue?', function() { restartHA(); }, 'warn')">
+                Restart Home Assistant
             </button>
         </div>
 
@@ -154,15 +272,62 @@
         <div id="result-message" class="message"></div>
     </div>
 
+    <!-- 自定义确认弹窗 -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal">
+            <div id="modal-title" class="modal-title"></div>
+            <div id="modal-message" class="modal-message"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="hideConfirm()">Cancel</button>
+                <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm"
+                    onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // 确认弹窗回调
+        let pendingAction = null;
+
+        function showConfirm(title, message, action, style) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            confirmBtn.className = 'modal-btn modal-btn-confirm' + (style === 'warn' ? ' warn' : '');
+            pendingAction = action;
+            document.getElementById('confirm-modal').classList.add('active');
+        }
+
+        function hideConfirm() {
+            document.getElementById('confirm-modal').classList.remove('active');
+            pendingAction = null;
+        }
+
+        function confirmAction() {
+            hideConfirm();
+            if (pendingAction) {
+                pendingAction();
+            }
+        }
+
+        // 点击遮罩层关闭弹窗
+        document.getElementById('confirm-modal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                hideConfirm();
+            }
+        });
+
+        function setButtonsDisabled(disabled) {
+            document.getElementById('install-btn').disabled = disabled;
+            document.getElementById('uninstall-btn').disabled = disabled;
+            document.getElementById('restart-btn').disabled = disabled;
+        }
+
         function startOperation(op) {
-            const installBtn = document.getElementById('install-btn');
-            const uninstallBtn = document.getElementById('uninstall-btn');
             const progress = document.getElementById('progress');
             const resultMsg = document.getElementById('result-message');
 
-            installBtn.disabled = true;
-            uninstallBtn.disabled = true;
+            setButtonsDisabled(true);
             progress.style.display = 'block';
             resultMsg.textContent = '';
 
@@ -190,31 +355,66 @@
                         if (data.status === 'success') {
                             clearInterval(interval);
                             showResult('success', data.message);
-                            // Update UI state based on operation
+                            // 根据操作类型更新 UI 状态
                             if (data.operation === 'Install') {
                                 document.getElementById('status-box').className = 'status installed';
                                 document.getElementById('status-box').textContent = 'HACS Installed';
                                 document.getElementById('install-btn').textContent = 'Reinstall';
-                                document.getElementById('install-btn').disabled = false;
-                                document.getElementById('uninstall-btn').disabled = false;
+                                // 重新绑定点击事件为需要确认的版本
+                                document.getElementById('install-btn').onclick = function () {
+                                    showConfirm('Reinstall HACS', 'This will remove the current HACS and download the latest version. Continue?', function () { startOperation('install'); });
+                                };
+                                setButtonsDisabled(false);
                             } else if (data.operation === 'Uninstall') {
                                 document.getElementById('status-box').className = 'status not-installed';
                                 document.getElementById('status-box').textContent = 'HACS Not Installed';
                                 document.getElementById('install-btn').textContent = 'Install HACS';
-                                document.getElementById('install-btn').disabled = false;
+                                // 重新绑定点击事件为直接安装版本
+                                document.getElementById('install-btn').onclick = function () {
+                                    startOperation('install');
+                                };
+                                setButtonsDisabled(false);
                                 document.getElementById('uninstall-btn').disabled = true;
                             }
 
                         } else if (data.status === 'error') {
                             clearInterval(interval);
                             showResult('error', data.message);
-                            // Re-enable buttons based on current guessed state (reload page ideally)
+                            // 出错时重新加载页面恢复按钮状态
                             setTimeout(() => location.reload(), 2000);
                         } else if (data.status === 'running') {
                             progressText.textContent = data.message;
                         }
                     });
             }, 1000);
+        }
+
+        function restartHA() {
+            const progress = document.getElementById('progress');
+            const resultMsg = document.getElementById('result-message');
+            const progressText = document.getElementById('progress-text');
+
+            setButtonsDisabled(true);
+            progress.style.display = 'block';
+            progressText.textContent = 'Restarting Home Assistant...';
+            resultMsg.textContent = '';
+
+            fetch('/api/restart_ha', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    progress.style.display = 'none';
+                    if (data.status === 'success') {
+                        showResult('success', data.message);
+                    } else {
+                        showResult('error', data.message);
+                    }
+                    setButtonsDisabled(false);
+                })
+                .catch(error => {
+                    progress.style.display = 'none';
+                    showResult('error', 'Request failed: ' + error);
+                    setButtonsDisabled(false);
+                });
         }
 
         function showResult(type, message) {

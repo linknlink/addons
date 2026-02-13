@@ -3,6 +3,7 @@ import os
 import subprocess
 import threading
 import time
+import docker
 
 app = Flask(__name__)
 
@@ -19,6 +20,39 @@ operation_state = {
 
 def check_hacs_installed():
     return os.path.exists(os.path.join(HACS_DIR, '__init__.py'))
+
+def find_ha_container():
+    """自动识别 Home Assistant 容器。
+    
+    查找优先级：
+    1. 容器名完全匹配 'homeassistant'
+    2. 带有 io.hass.type=homeassistant 标签的容器
+    3. 容器名包含 'homeassistant' 的容器
+    """
+    try:
+        client = docker.from_env()
+        containers = client.containers.list(all=True)
+        
+        # 优先级1：容器名完全匹配
+        for container in containers:
+            if container.name == 'homeassistant':
+                return container
+        
+        # 优先级2：通过标签匹配
+        for container in containers:
+            labels = container.labels or {}
+            if labels.get('io.hass.type') == 'homeassistant':
+                return container
+        
+        # 优先级3：容器名包含 homeassistant
+        for container in containers:
+            if 'homeassistant' in container.name.lower():
+                return container
+        
+        return None
+    except Exception as e:
+        print(f"查找 HA 容器时出错: {e}")
+        return None
 
 def run_script_thread(script_path, operation_name, success_msg):
     global operation_state
@@ -51,7 +85,7 @@ def run_script_thread(script_path, operation_name, success_msg):
 def index():
     installed = check_hacs_installed()
     
-    # Get host path for display
+    # 获取宿主机路径用于展示
     host_ha_config_path = os.environ.get('HOST_HA_CONFIG_PATH', '/usr/share/hassio/homeassistant')
     target_path = os.path.join(host_ha_config_path, 'custom_components/hacs')
     
@@ -81,10 +115,24 @@ def uninstall():
     
     return jsonify({'status': 'success', 'message': 'Uninstallation started'})
 
+@app.route('/api/restart_ha', methods=['POST'])
+def restart_ha():
+    """重启 Home Assistant 容器"""
+    try:
+        container = find_ha_container()
+        if container is None:
+            return jsonify({'status': 'error', 'message': 'Unable to find Home Assistant container'})
+        
+        container_name = container.name
+        container.restart(timeout=30)
+        return jsonify({'status': 'success', 'message': f'Home Assistant ({container_name}) is restarting...'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Restart failed: {str(e)}'})
+
 @app.route('/api/status')
 def status():
     return jsonify(operation_state)
 
 if __name__ == '__main__':
-    # Port changed to 8202
+    # 端口改为 8202
     app.run(host='0.0.0.0', port=8202)

@@ -13,7 +13,7 @@ RUN apk add --no-cache \
     ca-certificates
 
 # 安装 Flask
-RUN pip3 install --no-cache-dir --break-system-packages flask requests
+RUN pip3 install --no-cache-dir --break-system-packages flask requests docker
 
 # 复制应用文件
 COPY rootfs /
