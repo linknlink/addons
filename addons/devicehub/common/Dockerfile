@@ -25,10 +25,8 @@ RUN mkdir -p /etc/iegcloudaccess/output \
     /var/lib/mosquitto \
     /var/log/supervisor
 
-# 复制预编译的可执行文件
-COPY bin/iegcloudaccess /etc/iegcloudaccess/iegcloudaccess
-COPY bin/ha2devicehub /etc/ha2devicehub/ha2devicehub
-COPY bin/linknlinkedge /etc/linknlinkedge/linknlinkedge
+# 复制预编译的可执行文件 (多架构支持)
+COPY bin /app/bin
 
 # 复制前端页面文件
 COPY frontend/iegcloudaccess/ /etc/iegcloudaccess/frontend/
@@ -38,11 +36,8 @@ COPY frontend/linknlinkedge/ /etc/linknlinkedge/web/
 # 复制配置文件和脚本
 COPY rootfs /
 
-# 设置可执行权限
-RUN chmod +x /etc/iegcloudaccess/iegcloudaccess && \
-    chmod +x /etc/ha2devicehub/ha2devicehub && \
-    chmod +x /etc/linknlinkedge/linknlinkedge && \
-    chmod +x /app/docker-entrypoint.sh && \
+# 设置脚本可执行权限
+RUN chmod +x /app/docker-entrypoint.sh && \
     chmod +x /app/init-db.sh
 
 # 设置 mosquitto 目录权限

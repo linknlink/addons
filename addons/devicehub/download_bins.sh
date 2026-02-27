@@ -17,7 +17,7 @@ TMP_DIR="/tmp/devicehub_extract"
 
 # addon 根目录
 ADDON_DIR="$(dirname "$0")"
-BIN_DIR="${ADDON_DIR}/common/bin"
+BIN_DIR="${ADDON_DIR}/common/bin/${ARCH}"
 FRONTEND_DIR="${ADDON_DIR}/common/frontend"
 
 # 初始化环境
