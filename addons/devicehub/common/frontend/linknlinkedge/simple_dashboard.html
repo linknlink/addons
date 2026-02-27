@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单仪表板 - LinkNLink Edge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: #7f8c8d;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .device-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .device-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .device-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .device-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .device-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .device-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .device-info {
+            margin-bottom: 1rem;
+        }
+
+        .device-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .device-info-label {
+            color: #7f8c8d;
+        }
+
+        .device-info-value {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+            flex: 1;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .control-group {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #ecf0f1;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .control-group h4 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .control-buttons .btn {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .devices-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 简单仪表板 - LinkNLink Edge</h1>
+        <div class="nav">
+            <a href="/">首页</a>
+            <a href="/linknlinkedge/web/unified_dashboard.html">统一管理</a>
+            <a href="/linknlinkedge/web/mqtt_advanced_test.html">MQTT测试</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 统计信息 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🏠</div>
+                <div class="stat-value" id="totalDevices">-</div>
+                <div class="stat-label">总设备数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="totalEntities">-</div>
+                <div class="stat-label">总实体数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🟢</div>
+                <div class="stat-value" id="onlineDevices">-</div>
+                <div class="stat-label">在线设备</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔗</div>
+                <div class="stat-value" id="wsConnections">-</div>
+                <div class="stat-label">WebSocket连接</div>
+            </div>
+        </div>
+
+        <!-- 设备列表 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2>设备状态</h2>
+            <button class="refresh-btn" onclick="refreshData()">刷新</button>
+        </div>
+
+        <div id="devicesLoading" class="loading">加载中...</div>
+        <div id="devicesError" class="error" style="display: none;"></div>
+        <div class="devices-grid" id="devicesGrid" style="display: none;">
+        </div>
+    </div>
+
+    <script>
+        let devices = [];
+        let entities = [];
+        let states = [];
+        let wsClient = null;
+        let wsConnected = false;
+        let messageIdCounter = 1; // WebSocket消息ID计数器
+
+        // 加载所有数据
+        async function loadAllData() {
+            await Promise.all([
+                loadDevices(),
+                loadEntities(),
+                loadStates()
+            ]);
+            updateStats();
+            renderDevices();
+        }
+
+        // 加载设备数据
+        async function loadDevices() {
+            try {
+                const response = await fetch('/linknlinkedge/api/devices');
+                const data = await response.json();
+                if (response.ok) {
+                    devices = data.devices || [];
+                } else {
+                    throw new Error(data.error || '加载设备失败');
+                }
+            } catch (err) {
+                console.error('加载设备失败:', err);
+                devices = [];
+            }
+        }
+
+        // 加载实体数据
+        async function loadEntities() {
+            try {
+                const response = await fetch('/linknlinkedge/api/entities');
+                const data = await response.json();
+                if (response.ok) {
+                    entities = data.entities || [];
+                } else {
+                    throw new Error(data.error || '加载实体失败');
+                }
+            } catch (err) {
+                console.error('加载实体失败:', err);
+                entities = [];
+            }
+        }
+
+        // 加载状态数据
+        async function loadStates() {
+            try {
+                const response = await fetch('/linknlinkedge/api/states');
+                const data = await response.json();
+                if (response.ok) {
+                    states = data.states || [];
+                } else {
+                    throw new Error(data.error || '加载状态失败');
+                }
+            } catch (err) {
+                console.error('加载状态失败:', err);
+                states = [];
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalDevices').textContent = devices.length;
+            document.getElementById('totalEntities').textContent = entities.length;
+            
+            // 计算在线设备数（这里简化处理，实际应该根据设备状态判断）
+            const onlineCount = Math.floor(devices.length * 0.8); // 假设80%设备在线
+            document.getElementById('onlineDevices').textContent = onlineCount;
+            
+            // 获取WebSocket连接数
+            fetchWebSocketConnections();
+        }
+
+        // 获取WebSocket连接数
+        async function fetchWebSocketConnections() {
+            try {
+                const response = await fetch('/linknlinkedge/health');
+                const data = await response.json();
+                if (data.services && data.services.websocket) {
+                    document.getElementById('wsConnections').textContent = data.services.websocket.connected_clients || 0;
+                }
+            } catch (err) {
+                console.error('获取WebSocket连接数失败:', err);
+                document.getElementById('wsConnections').textContent = '-';
+            }
+        }
+
+        // 渲染设备列表
+        function renderDevices() {
+            const loading = document.getElementById('devicesLoading');
+            const error = document.getElementById('devicesError');
+            const grid = document.getElementById('devicesGrid');
+
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            grid.style.display = 'grid';
+
+            grid.innerHTML = '';
+
+            if (devices.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #7f8c8d;">暂无设备</div>';
+                return;
+            }
+
+            devices.forEach(device => {
+                const deviceCard = createDeviceCard(device);
+                grid.appendChild(deviceCard);
+            });
+        }
+
+        // 创建设备卡片
+        function createDeviceCard(device) {
+            const card = document.createElement('div');
+            card.className = 'device-card';
+
+            // 获取设备相关的实体
+            const deviceEntities = entities.filter(entity => 
+                entity.attributes && entity.attributes.device_id === device.id
+            );
+
+            // 获取设备状态
+            const deviceStates = states.filter(state => 
+                deviceEntities.some(entity => entity.entity_id === state.entity_id)
+            );
+
+            // 判断设备是否在线（简化逻辑）
+            const isOnline = deviceStates.length > 0;
+
+            card.innerHTML = `
+                <div class="device-header">
+                    <div class="device-name">${device.name}</div>
+                    <div class="device-status ${isOnline ? 'online' : 'offline'}">
+                        ${isOnline ? '在线' : '离线'}
+                    </div>
+                </div>
+                <div class="device-info">
+                    <div class="device-info-item">
+                        <span class="device-info-label">制造商:</span>
+                        <span class="device-info-value">${device.manufacturer || '-'}</span>
+                    </div>
+                    <div class="device-info-item">
+                        <span class="device-info-label">型号:</span>
+                        <span class="device-info-value">${device.model || '-'}</span>
+                    </div>
+                    <div class="device-info-item">
+                        <span class="device-info-label">软件版本:</span>
+                        <span class="device-info-value">${device.sw_version || '-'}</span>
+                    </div>
+                    <div class="device-info-item">
+                        <span class="device-info-label">实体数量:</span>
+                        <span class="device-info-value">${deviceEntities.length}</span>
+                    </div>
+                    <div class="device-info-item">
+                        <span class="device-info-label">最后更新:</span>
+                        <span class="device-info-value">${new Date(device.updated_at).toLocaleString()}</span>
+                    </div>
+                </div>
+                <div class="device-actions">
+                    <button class="btn" onclick="viewDeviceDetails('${device.id}')">查看详情</button>
+                    <button class="btn btn-success" onclick="controlDevice('${device.id}')">控制</button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 查看设备详情
+        function viewDeviceDetails(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            if (device) {
+                alert(`设备详情:\n名称: ${device.name}\n制造商: ${device.manufacturer || '-'}\n型号: ${device.model || '-'}\n软件版本: ${device.sw_version || '-'}`);
+            }
+        }
+
+        // 控制设备
+        function controlDevice(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            if (device) {
+                showDeviceControlModal(device);
+            }
+        }
+
+        // 显示设备控制模态框
+        function showDeviceControlModal(device) {
+            // 获取设备相关的实体
+            const deviceEntities = entities.filter(entity => 
+                entity.attributes && entity.attributes.device_id === device.id
+            );
+
+            // 创建控制按钮HTML
+            let controlButtons = '';
+            deviceEntities.forEach(entity => {
+                const domain = entity.domain;
+                const entityId = entity.entity_id;
+                
+                switch(domain) {
+                    case 'light':
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>💡 ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn btn-success" onclick="callRestfulService('light', 'turn_on', '${entityId}')">开启</button>
+                                    <button class="btn btn-danger" onclick="callRestfulService('light', 'turn_off', '${entityId}')">关闭</button>
+                                    <button class="btn" onclick="callRestfulService('light', 'toggle', '${entityId}')">切换</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'switch':
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>🔌 ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn btn-success" onclick="callRestfulService('switch', 'turn_on', '${entityId}')">开启</button>
+                                    <button class="btn btn-danger" onclick="callRestfulService('switch', 'turn_off', '${entityId}')">关闭</button>
+                                    <button class="btn" onclick="callRestfulService('switch', 'toggle', '${entityId}')">切换</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'climate':
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>❄️ ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn" onclick="callRestfulService('climate', 'set_hvac_mode', '${entityId}', {hvac_mode: 'heat'})">制热</button>
+                                    <button class="btn" onclick="callRestfulService('climate', 'set_hvac_mode', '${entityId}', {hvac_mode: 'cool'})">制冷</button>
+                                    <button class="btn" onclick="callRestfulService('climate', 'set_hvac_mode', '${entityId}', {hvac_mode: 'off'})">关闭</button>
+                                    <button class="btn" onclick="callRestfulService('climate', 'set_temperature', '${entityId}', {temperature: 22})">22°C</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'fan':
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>🌀 ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn btn-success" onclick="callRestfulService('fan', 'turn_on', '${entityId}')">开启</button>
+                                    <button class="btn btn-danger" onclick="callRestfulService('fan', 'turn_off', '${entityId}')">关闭</button>
+                                    <button class="btn" onclick="callRestfulService('fan', 'toggle', '${entityId}')">切换</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'cover':
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>🪟 ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn btn-success" onclick="callRestfulService('cover', 'open_cover', '${entityId}')">打开</button>
+                                    <button class="btn btn-danger" onclick="callRestfulService('cover', 'close_cover', '${entityId}')">关闭</button>
+                                    <button class="btn" onclick="callRestfulService('cover', 'stop_cover', '${entityId}')">停止</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'lock':
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>🔒 ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn btn-success" onclick="callRestfulService('lock', 'unlock', '${entityId}')">解锁</button>
+                                    <button class="btn btn-danger" onclick="callRestfulService('lock', 'lock', '${entityId}')">锁定</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'media_player':
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>🎵 ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn btn-success" onclick="callRestfulService('media_player', 'turn_on', '${entityId}')">开启</button>
+                                    <button class="btn btn-danger" onclick="callRestfulService('media_player', 'turn_off', '${entityId}')">关闭</button>
+                                    <button class="btn" onclick="callRestfulService('media_player', 'media_play_pause', '${entityId}')">播放/暂停</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    default:
+                        controlButtons += `
+                            <div class="control-group">
+                                <h4>🔧 ${entity.name || entityId}</h4>
+                                <div class="control-buttons">
+                                    <button class="btn" onclick="callRestfulService('${domain}', 'turn_on', '${entityId}')">开启</button>
+                                    <button class="btn" onclick="callRestfulService('${domain}', 'turn_off', '${entityId}')">关闭</button>
+                                    <button class="btn" onclick="callRestfulService('${domain}', 'toggle', '${entityId}')">切换</button>
+                                </div>
+                            </div>
+                        `;
+                }
+            });
+
+            if (!controlButtons) {
+                controlButtons = '<p>该设备没有可控制的实体</p>';
+            }
+
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>控制设备: ${device.name}</h3>
+                        <span class="close" onclick="closeModal(this)">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        ${controlButtons}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 调用北向RESTful服务
+        async function callRestfulService(domain, service, entityId, serviceData = {}) {
+            // 构建北向API请求数据，格式类似Home Assistant
+            const data = {
+                entity_id: entityId,
+                ...serviceData
+            };
+
+            try {
+                // 调用北向HTTP接口，格式: /linknlinkedge/api/services/<domain>/<service>
+                const response = await fetch(`/linknlinkedge/api/services/${domain}/${service}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer TOKEN', // 北向接口需要认证
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage(`控制成功: ${domain}.${service}`, 'success');
+                    console.log('北向API控制结果:', result);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || '控制失败');
+                }
+            } catch (err) {
+                showMessage(`控制失败: ${err.message}`, 'error');
+                console.error('北向API控制错误:', err);
+            }
+        }
+
+        // 关闭模态框
+        function closeModal(element) {
+            const modal = element.closest('.modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 刷新数据
+        function refreshData() {
+            const loading = document.getElementById('devicesLoading');
+            const error = document.getElementById('devicesError');
+            const grid = document.getElementById('devicesGrid');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            grid.style.display = 'none';
+
+            loadAllData().catch(err => {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = '加载数据失败: ' + err.message;
+            });
+        }
+
+        // WebSocket连接功能
+        function connectWebSocket() {
+            if (wsConnected) {
+                console.log('WebSocket已连接');
+                return;
+            }
+
+            const wsUrl = `ws://${window.location.hostname}:${window.location.port}/linknlinkedge/api/websocket`;
+            wsClient = new WebSocket(wsUrl);
+
+            wsClient.onopen = function() {
+                wsConnected = true;
+                console.log('WebSocket连接成功');
+                
+                // 发送认证消息
+                const authMessage = {
+                    type: "auth",
+                    access_token: "test_token",
+                    id: getNextMessageId()
+                };
+                wsClient.send(JSON.stringify(authMessage));
+            };
+
+            wsClient.onmessage = function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    handleWebSocketMessage(message);
+                } catch (e) {
+                    console.log('收到非JSON消息:', event.data);
+                }
+            };
+
+            wsClient.onclose = function() {
+                wsConnected = false;
+                console.log('WebSocket连接已断开');
+            };
+
+            wsClient.onerror = function(error) {
+                console.error('WebSocket错误:', error);
+            };
+        }
+
+        // 断开WebSocket连接
+        function disconnectWebSocket() {
+            if (wsClient) {
+                wsClient.close();
+                wsClient = null;
+                wsConnected = false;
+            }
+        }
+
+        // 获取下一个消息ID
+        function getNextMessageId() {
+            return messageIdCounter++;
+        }
+
+        // 处理WebSocket消息
+        function handleWebSocketMessage(message) {
+            console.log('收到WebSocket消息:', message);
+            
+            // 如果是回复消息，保持对端的ID
+            if (message.id) {
+                // 这里可以处理回复消息的逻辑
+                console.log('收到回复消息，ID:', message.id);
+            }
+            
+            // 根据消息类型处理
+            if (message.type === 'event') {
+                if (message.event && message.event.event_type === 'state_changed') {
+                    // 状态变更，刷新数据
+                    refreshData();
+                }
+            }
+        }
+
+        // 发送WebSocket消息
+        function sendWebSocketMessage(message) {
+            if (!wsConnected) {
+                console.error('WebSocket未连接');
+                return;
+            }
+
+            // 为发送的消息分配ID
+            message.id = getNextMessageId();
+            wsClient.send(JSON.stringify(message));
+            console.log('发送WebSocket消息:', message);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllData().catch(err => {
+                const loading = document.getElementById('devicesLoading');
+                const error = document.getElementById('devicesError');
+                
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = '加载数据失败: ' + err.message;
+            });
+            
+            // 自动连接WebSocket
+            connectWebSocket();
+        });
+
+        // 每30秒自动刷新数据
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html>

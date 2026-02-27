@@ -1,0 +1,2893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT测试工具 & RESTful API控制 - LinkNLink Edge</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: #7f8c8d;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            color: #2c3e50;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .device-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .device-status-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .btn-online, .btn-offline {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-online {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-online:hover {
+            background-color: #229954;
+        }
+
+        .btn-offline {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-offline:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        /* 新的设备测试界面样式 */
+        .device-test-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #3498db;
+        }
+
+        .device-test-header h4 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+        }
+
+        .device-test-header p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .device-actions-section,
+        .device-control-section,
+        .device-status-section {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #ecf0f1;
+        }
+
+        .device-actions-section h5,
+        .device-control-section h5,
+        .device-status-section h5 {
+            margin: 0 0 1rem 0;
+            color: #34495e;
+            font-size: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .action-buttons .btn {
+            margin: 0;
+        }
+
+        .websocket-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .websocket-controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .websocket-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .websocket-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .websocket-messages {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+
+        .websocket-message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .message-device {
+            background-color: #e8f5e8;
+            border-left: 4px solid #27ae60;
+        }
+
+        .message-entity {
+            background-color: #e8f4fd;
+            border-left: 4px solid #3498db;
+        }
+
+        .message-state {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .message-error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .message-raw {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .message-command {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .copy-btn:active {
+            background-color: #004085;
+        }
+
+        .clear-messages {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .clear-messages:hover {
+            background-color: #5a6268;
+        }
+
+        .log-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 5px;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+
+        .log-timestamp {
+            color: #95a5a6;
+        }
+
+        .log-topic {
+            color: #3498db;
+        }
+
+        .log-message {
+            color: #e74c3c;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .device-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .device-card h4 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .device-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .device-actions .btn {
+            flex: 0 0 auto;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            min-width: 80px;
+        }
+
+        .message-input {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .message-input .form-group {
+            flex: 1;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .message-input {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📡 MQTT测试工具 & 🌐 RESTful API控制 - LinkNLink Edge</h1>
+        <div class="nav">
+            <a href="/">首页</a>
+            <a href="/linknlinkedge/web/unified_dashboard.html">统一管理</a>
+            <a href="/linknlinkedge/web/simple_dashboard.html">简单仪表板</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- WebSocket实时推送信息 -->
+        <div class="websocket-section">
+            <h3>
+                <span>📡</span>
+                北向WebSocket实时推送
+                <span class="status" id="wsStatus">未连接</span>
+            </h3>
+            <div class="websocket-status">
+                <span>连接状态:</span>
+                <span id="wsConnectionStatus">未连接</span>
+                <button id="wsConnectBtn" class="btn">连接WebSocket</button>
+                <button id="wsDisconnectBtn" class="btn" style="display: none;">断开连接</button>
+            </div>
+            <div class="websocket-controls">
+                <button class="btn" onclick="sendDeviceRegistryList()">📱 获取设备列表</button>
+                <button class="btn" onclick="sendEntityRegistryList()">🔧 获取实体列表</button>
+            </div>
+            <div class="websocket-controls">
+                <button class="btn" onclick="sendLightToggle()">💡 灯光切换</button>
+                <button class="btn" onclick="sendLightTurnOn()">💡 灯光开启</button>
+                <button class="btn" onclick="sendLightTurnOff()">💡 灯光关闭</button>
+                <button class="btn" onclick="sendLightBrightness()">🔆 调节亮度</button>
+            </div>
+            <div class="websocket-controls">
+                <button class="btn" onclick="sendLightColor()">🌈 设置颜色</button>
+                <button class="btn" onclick="sendLightColorMode()">🎨 颜色模式</button>
+                <button class="btn" onclick="sendLightColorTemp()">🌡️ 色温调节</button>
+                <button class="btn" onclick="sendMotionSensor()">👤 人感测试</button>
+            </div>
+            <div class="websocket-controls">
+                <button class="btn" onclick="testAdvancedLight()" style="background: #e74c3c; color: white;">🚀 高级灯光测试</button>
+                <button class="btn" onclick="testValueTemplate()" style="background: #9b59b6; color: white;">📝 Value Template测试</button>
+                <button class="btn" onclick="testDynamicTopics()" style="background: #f39c12; color: white;">🔄 动态主题测试</button>
+            </div>
+            <div class="websocket-controls">
+                <button class="btn" onclick="testDeviceOnline()" style="background: #27ae60; color: white;">🟢 设备上线测试</button>
+                <button class="btn" onclick="testDeviceOffline()" style="background: #e74c3c; color: white;">🔴 设备离线测试</button>
+                <button class="btn" onclick="testAllDevices()" style="background: #3498db; color: white;">🔧 全设备测试</button>
+            </div>
+            <div class="websocket-controls">
+                <button class="btn" onclick="sendSwitchToggle()">🔌 开关切换</button>
+                <button class="btn" onclick="sendSwitchTurnOn()">🔌 开关开启</button>
+                <button class="btn" onclick="sendSwitchTurnOff()">🔌 开关关闭</button>
+                <button class="btn" onclick="sendClimateMode()">❄️ 空调模式</button>
+            </div>
+            <div class="websocket-messages" id="wsMessages">
+                <div class="websocket-message">等待WebSocket连接...</div>
+            </div>
+            <button class="clear-messages" onclick="clearWebSocketMessages()">清空消息</button>
+        </div>
+
+        <!-- MQTT连接配置 -->
+        <div class="card">
+            <div class="card-header">
+                <h3>MQTT连接配置</h3>
+                <div>
+                    <span class="status" id="connectionStatus">未连接</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mqttHost">MQTT Broker地址</label>
+                        <input type="text" id="mqttHost" value="127.0.0.1" placeholder="127.0.0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="mqttPort">端口</label>
+                        <input type="number" id="mqttPort" value="9001" placeholder="9001">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mqttUsername">用户名</label>
+                        <input type="text" id="mqttUsername" value="admin" placeholder="admin">
+                    </div>
+                    <div class="form-group">
+                        <label for="mqttPassword">密码</label>
+                        <input type="password" id="mqttPassword" value="admin" placeholder="admin">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="mqttClientId">客户端ID</label>
+                    <input type="text" id="mqttClientId" value="linknlinkedge_web_client" placeholder="留空自动生成唯一ID">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-success" id="connectBtn" onclick="connectMQTT()">连接</button>
+                    <button class="btn btn-danger" id="disconnectBtn" onclick="disconnectMQTT()" disabled>断开连接</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设备测试 -->
+        <div class="card">
+            <div class="card-header">
+                <h3>设备测试</h3>
+            </div>
+            <div class="card-body">
+                <!-- 设备选择区域 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deviceTypeSelect">选择设备类型</label>
+                        <select id="deviceTypeSelect" onchange="loadDeviceTestInterface()">
+                            <option value="">请选择设备类型</option>
+                            <option value="temperature">🌡️ 温度传感器</option>
+                            <option value="light">💡 智能灯光</option>
+                            <option value="switch">🔌 智能开关</option>
+                            <option value="climate">❄️ 空调控制器</option>
+                            <option value="motion">👤 人感传感器</option>
+                            <option value="humidity">💧 湿度传感器</option>
+                            <option value="power">⚡ 功率监控</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="entityIdInput">实体ID</label>
+                        <input type="text" id="entityIdInput" placeholder="sensor.test_temperature" value="">
+                    </div>
+                </div>
+
+                <!-- 动态设备测试界面 -->
+                <div id="deviceTestInterface" style="display: none;">
+                    <div class="device-test-header">
+                        <h4 id="selectedDeviceTitle">设备测试</h4>
+                        <p id="selectedDeviceDescription">选择设备类型后显示相应的测试选项</p>
+                    </div>
+                    
+                    <!-- 设备发现和控制区域 -->
+                    <div class="device-actions-section">
+                        <h5>🔍 设备发现</h5>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" id="discoveryBtn" onclick="sendDeviceDiscovery()">发送发现</button>
+                            <button class="btn btn-secondary" id="statusReportBtn" onclick="sendStatusReport()">状态上报</button>
+                        </div>
+                    </div>
+
+                    <!-- Value Template 测试区域 -->
+                    <div class="device-actions-section" style="background: #f0f8ff; border-left: 4px solid #007bff;">
+                        <h5>🎯 Value Template 测试</h5>
+                        <div class="action-buttons">
+                            <button class="btn btn-info" onclick="testTemperatureSensor()">🌡️ 基础温度传感器</button>
+                            <button class="btn btn-info" onclick="testAdvancedTemperatureSensor()">🌡️ 高级温度传感器 (round模板)</button>
+                            <button class="btn btn-info" onclick="testAdvancedTemperatureState()">📊 高级温度状态</button>
+                            <button class="btn btn-info" onclick="testAdvancedTemperatureAttributes()">📋 高级温度属性</button>
+                        </div>
+                        <div class="action-buttons" style="margin-top: 10px;">
+                            <button class="btn btn-warning" onclick="testLightDiscovery()">💡 基础智能灯光</button>
+                            <button class="btn btn-warning" onclick="testAdvancedLightDiscovery()">💡 高级智能灯光 (多模板)</button>
+                            <button class="btn btn-warning" onclick="testAdvancedLightState()">🎨 高级灯光状态</button>
+                            <button class="btn btn-warning" onclick="testAdvancedLightAttributes()">📋 高级灯光属性</button>
+                        </div>
+                        <div style="margin-top: 10px; padding: 10px; background: #e8f4fd; border-radius: 5px; font-size: 0.9rem; color: #666;">
+                            <strong>模板功能说明：</strong><br>
+                            • <code>{{ value_json.temperature | round(1) }}</code> - 四舍五入到1位小数<br>
+                            • <code>{{ value_json.brightness | round(0) }}</code> - 四舍五入到整数<br>
+                            • <code>{{ value_json.rgb | join(",") }}</code> - 数组转逗号分隔字符串<br>
+                            • <code>{{ value_json.state if value_json.state is defined else "off" }}</code> - 条件判断
+                        </div>
+                    </div>
+
+                    <!-- 设备控制区域 -->
+                    <div class="device-control-section" id="deviceControlSection" style="display: none;">
+                        <h5>🎛️ 设备控制</h5>
+                        <div id="controlButtons" class="action-buttons">
+                            <!-- 动态生成的控制按钮 -->
+                        </div>
+                    </div>
+
+                    <!-- 设备状态控制 -->
+                    <div class="device-status-section">
+                        <h5>📡 设备状态</h5>
+                        <div class="action-buttons">
+                            <button class="btn-online" onclick="setDeviceOnlineFromSelect()">上线</button>
+                            <button class="btn-offline" onclick="setDeviceOfflineFromSelect()">下线</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 状态上报表单 -->
+        <div class="card">
+            <div class="card-header">
+                <h3>📊 状态上报表单</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="stateEntityId">实体ID</label>
+                        <input type="text" id="stateEntityId" placeholder="sensor.test_temperature" value="sensor.test_temperature">
+                    </div>
+                    <div class="form-group">
+                        <label for="stateValue">状态值</label>
+                        <input type="text" id="stateValue" placeholder="25.5" value="25.5">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="stateAttributes">属性 (JSON格式)</label>
+                        <textarea id="stateAttributes" rows="4" placeholder='{"temperature": "25.5", "unit": "°C", "quality": "good"}'>{"temperature": "25.5", "unit": "°C", "quality": "good", "status": "active"}</textarea>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" onclick="sendCustomStateReport()">📤 发送状态上报</button>
+                    <button class="btn btn-secondary" onclick="loadPresetStates()">📋 加载预设</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 消息发送 -->
+        <div class="card">
+            <div class="card-header">
+                <h3>消息发送</h3>
+            </div>
+            <div class="card-body">
+                <div class="message-input">
+                    <div class="form-group">
+                        <label for="messageTopic">主题</label>
+                        <input type="text" id="messageTopic" placeholder="linknlinkedge/sensor/temperature/config">
+                    </div>
+                    <div class="form-group">
+                        <label for="messagePayload">消息内容</label>
+                        <textarea id="messagePayload" placeholder='{"name": "Test Sensor", "state_topic": "test/status"}'></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn" onclick="sendMessage()">发送消息</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 消息日志 -->
+        <div class="card">
+            <div class="card-header">
+                <h3>消息日志</h3>
+                <button class="btn" onclick="clearLog()">清空日志</button>
+            </div>
+            <div class="card-body">
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry">
+                        <span class="log-timestamp">[等待连接]</span> MQTT测试工具已就绪
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mqttClient = null;
+        let isConnected = false;
+        let wsClient = null;
+        let wsConnected = false;
+        let messageIdCounter = 1; // WebSocket消息ID计数器
+
+        // 连接MQTT
+        function connectMQTT() {
+            const host = document.getElementById('mqttHost').value;
+            const port = document.getElementById('mqttPort').value;
+            const username = document.getElementById('mqttUsername').value;
+            const password = document.getElementById('mqttPassword').value;
+            let clientId = document.getElementById('mqttClientId').value;
+
+            // 确保客户端ID唯一性
+            if (!clientId) {
+                clientId = 'linknlinkedge_web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                document.getElementById('mqttClientId').value = clientId;
+            }
+
+            const brokerUrl = `ws://${host}:${port}`; // 直接连接到MQTT broker的WebSocket端口
+
+            const options = {
+                clientId: clientId,
+                username: username,
+                password: password,
+                clean: true,
+                reconnectPeriod: 0, // 禁用自动重连，避免连接循环
+                connectTimeout: 10 * 1000,
+                keepalive: 60,
+                protocolVersion: 4, // 使用MQTT 3.1.1
+                protocol: 'ws', // 明确指定WebSocket协议
+            };
+
+            try {
+                mqttClient = mqtt.connect(brokerUrl, options);
+
+                mqttClient.on('connect', function () {
+                    isConnected = true;
+                    updateConnectionStatus('已连接', 'connected');
+                    document.getElementById('connectBtn').disabled = true;
+                    document.getElementById('disconnectBtn').disabled = false;
+                    addLog('系统', 'MQTT连接成功');
+                    
+                    // 订阅所有linknlinkedge主题
+                    mqttClient.subscribe('linknlinkedge/#', function (err) {
+                        if (!err) {
+                            addLog('系统', '已订阅 linknlinkedge/# 主题');
+                        }
+                    });
+                });
+
+                mqttClient.on('error', function (err) {
+                    console.error('MQTT连接错误:', err);
+                    addLog('错误', err.message);
+                    showMessage('MQTT连接失败: ' + err.message, 'error');
+                });
+
+                mqttClient.on('message', function (topic, message) {
+                    addLog('接收', topic, message.toString());
+                });
+
+                mqttClient.on('close', function () {
+                    console.log('MQTT连接已关闭');
+                    isConnected = false;
+                    updateConnectionStatus('已断开', 'disconnected');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    addLog('系统', 'MQTT连接已断开');
+                });
+
+                mqttClient.on('offline', function () {
+                    console.log('MQTT客户端离线');
+                    addLog('系统', 'MQTT客户端离线');
+                });
+
+                mqttClient.on('reconnect', function () {
+                    console.log('MQTT客户端重连中...');
+                    addLog('系统', 'MQTT客户端重连中...');
+                });
+
+            } catch (err) {
+                showMessage('连接失败: ' + err.message, 'error');
+            }
+        }
+
+        // 断开MQTT连接
+        function disconnectMQTT() {
+            if (mqttClient) {
+                mqttClient.end();
+                mqttClient = null;
+            }
+        }
+
+        // 更新连接状态
+        function updateConnectionStatus(status, className) {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.textContent = status;
+            statusElement.className = 'status ' + className;
+        }
+
+        // 添加日志
+        function addLog(type, topic, message) {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            if (message) {
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> 
+                    <span class="log-topic">[${type}] ${topic}</span><br>
+                    <span class="log-message">${message}</span>
+                `;
+            } else {
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> 
+                    <span class="log-topic">[${type}]</span> ${topic}
+                `;
+            }
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+        }
+
+        // 发送消息
+        function sendMessage() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const topic = document.getElementById('messageTopic').value;
+            const payload = document.getElementById('messagePayload').value;
+
+            if (!topic) {
+                showMessage('请输入主题', 'error');
+                return;
+            }
+
+            try {
+                mqttClient.publish(topic, payload, { qos: 1, retain: false });
+                addLog('发送', topic, payload);
+                showMessage('消息发送成功', 'success');
+            } catch (err) {
+                showMessage('发送失败: ' + err.message, 'error');
+            }
+        }
+
+        // 测试温度传感器（带Value Template）
+        function testTemperatureSensor() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "测试温度传感器",
+                unique_id: "test_temp_001",
+                state_topic: "linknlinkedge/sensor/test_temperature/status",
+                command_topic: "linknlinkedge/sensor/test_temperature/set",
+                unit_of_measurement: "°C",
+                device_class: "temperature",
+                state_class: "measurement",
+                availability_topic: "linknlinkedge/sensor/test_temperature/availability",
+                payload_available: "online",
+                payload_not_available: "offline",
+                json_attributes_topic: "linknlinkedge/sensor/test_temperature/attributes",
+                value_template: "{{ value_json.temperature }}",
+                device: {
+                    identifiers: ["test_temp_001"],
+                    name: "测试温度传感器",
+                    manufacturer: "Test Manufacturer",
+                    model: "Test Model",
+                    sw_version: "1.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/sensor/test_temperature/config";
+            mqttClient.publish(topic, JSON.stringify(config, null, 2), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(config, null, 2));
+            showMessage('温度传感器发现消息已发送', 'success');
+        }
+
+        // 测试高级温度传感器（带复杂Value Template）
+        function testAdvancedTemperatureSensor() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "高级温度传感器",
+                unique_id: "advanced_temp_001",
+                state_topic: "linknlinkedge/sensor/advanced_temp/status",
+                command_topic: "linknlinkedge/sensor/advanced_temp/set",
+                unit_of_measurement: "°C",
+                device_class: "temperature",
+                state_class: "measurement",
+                availability_topic: "linknlinkedge/sensor/advanced_temp/availability",
+                payload_available: "online",
+                payload_not_available: "offline",
+                json_attributes_topic: "linknlinkedge/sensor/advanced_temp/attributes",
+                value_template: "{{ value_json.temperature | round(1) }}",
+                device: {
+                    identifiers: ["advanced_temp_001"],
+                    name: "高级温度传感器",
+                    manufacturer: "Advanced Manufacturer",
+                    model: "Advanced Model",
+                    sw_version: "2.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/sensor/advanced_temp/config";
+            mqttClient.publish(topic, JSON.stringify(config, null, 2), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(config, null, 2));
+            showMessage('高级温度传感器发现消息已发送', 'success');
+        }
+
+        // 测试温度状态
+        function testTemperatureState() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const state = {
+                temperature: (Math.random() * 20 + 15).toFixed(1),
+                timestamp: new Date().toISOString(),
+                quality: "good",
+                status: "active"
+            };
+
+            const topic = "linknlinkedge/sensor/test_temperature/status";
+            mqttClient.publish(topic, JSON.stringify(state), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(state));
+            showMessage('温度状态已上报', 'success');
+        }
+
+        // 测试高级温度状态（带复杂数据）
+        function testAdvancedTemperatureState() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const state = {
+                temperature: (Math.random() * 20 + 15).toFixed(4), // 4位小数，测试round(1)模板
+                humidity: (Math.random() * 40 + 30).toFixed(1),
+                pressure: (Math.random() * 100 + 1000).toFixed(2),
+                timestamp: new Date().toISOString(),
+                quality: "excellent",
+                status: "active",
+                battery_level: Math.floor(Math.random() * 20 + 80),
+                signal_strength: Math.floor(Math.random() * 20 - 60)
+            };
+
+            const topic = "linknlinkedge/sensor/advanced_temp/state";
+            mqttClient.publish(topic, JSON.stringify(state), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(state));
+            showMessage('高级温度状态已上报（测试Value Template: round(1)）', 'success');
+        }
+
+        // 测试JSON属性更新
+        function testAdvancedTemperatureAttributes() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const attributes = {
+                location: "living_room",
+                room: "客厅",
+                calibration_offset: (Math.random() * 0.2 - 0.1).toFixed(3),
+                last_calibration: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+                battery_level: Math.floor(Math.random() * 20 + 80),
+                signal_strength: Math.floor(Math.random() * 20 - 60),
+                firmware_version: "2.1." + Math.floor(Math.random() * 10),
+                power_consumption: (Math.random() * 5 + 10).toFixed(1),
+                energy_today: (Math.random() * 2).toFixed(2)
+            };
+
+            const topic = "linknlinkedge/sensor/advanced_temp/attributes";
+            mqttClient.publish(topic, JSON.stringify(attributes), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(attributes));
+            showMessage('高级温度属性已更新', 'success');
+        }
+
+        // 测试灯光发现
+        function testLightDiscovery() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "测试智能灯光",
+                unique_id: "test_light_001",
+                state_topic: "linknlinkedge/light/test_light/status",
+                command_topic: "linknlinkedge/light/test_light/set",
+                brightness_state_topic: "linknlinkedge/light/test_light/status",
+                brightness_command_topic: "linknlinkedge/light/test_light/set",
+                availability_topic: "linknlinkedge/light/test_light/availability",
+                payload_available: "online",
+                payload_not_available: "offline",
+                payload_on: "ON",
+                payload_off: "OFF",
+                state_on: "ON",
+                state_off: "OFF",
+                brightness: true,
+                device: {
+                    identifiers: ["test_light_001"],
+                    name: "测试智能灯光",
+                    manufacturer: "Test Manufacturer",
+                    model: "Test Light",
+                    sw_version: "1.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/light/test_light/config";
+            mqttClient.publish(topic, JSON.stringify(config, null, 2), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(config, null, 2));
+            showMessage('智能灯光发现消息已发送', 'success');
+        }
+
+        // 测试高级智能灯光（带复杂Value Template）
+        function testAdvancedLightDiscovery() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "高级智能灯光",
+                unique_id: "advanced_light_001",
+                device_class: "light",
+                state_topic: "linknlinkedge/light/advanced_light/status",
+                command_topic: "linknlinkedge/light/advanced_light/set",
+                brightness_command_topic: "linknlinkedge/light/advanced_light/set",
+                color_temp_command_topic: "linknlinkedge/light/advanced_light/set",
+                rgb_command_topic: "linknlinkedge/light/advanced_light/set",
+                availability_topic: "linknlinkedge/light/advanced_light/availability",
+                json_attributes_topic: "linknlinkedge/light/advanced_light/attributes",
+                value_template: "{{ value_json.state if value_json.state is defined else \"off\" }}",
+                brightness_value_template: "{{ value_json.brightness | round(0) }}",
+                color_temp_value_template: "{{ value_json.color_temp | round(0) }}",
+                rgb_value_template: "{{ value_json.rgb | join(\",\") }}",
+                payload_available: "online",
+                payload_not_available: "offline",
+                payload_on: "ON",
+                payload_off: "OFF",
+                state_on: "ON",
+                state_off: "OFF",
+                device: {
+                    identifiers: ["advanced_light_001"],
+                    name: "高级智能灯光",
+                    manufacturer: "Smart Home Co",
+                    model: "RGBW Light Pro",
+                    sw_version: "2.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/light/advanced_light/config";
+            mqttClient.publish(topic, JSON.stringify(config, null, 2), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(config, null, 2));
+            showMessage('高级智能灯光发现消息已发送', 'success');
+        }
+
+        // 测试灯光控制
+        function testLightControl() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const commands = [
+                { topic: "linknlinkedge/light/test_light/set", payload: "ON" },
+                { topic: "linknlinkedge/light/test_light/brightness/set", payload: "180" }
+            ];
+
+            commands.forEach(cmd => {
+                mqttClient.publish(cmd.topic, cmd.payload, { qos: 1, retain: false });
+                addLog('发送', cmd.topic, cmd.payload);
+            });
+
+            showMessage('灯光控制命令已发送', 'success');
+        }
+
+        // 测试高级灯光状态（带复杂Value Template）
+        function testAdvancedLightState() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const state = {
+                state: Math.random() > 0.5 ? "ON" : "OFF",
+                brightness: Math.floor(Math.random() * 255), // 测试round(0)模板
+                color_temp: Math.floor(Math.random() * 2000 + 2000), // 测试round(0)模板
+                rgb: [Math.floor(Math.random() * 255), Math.floor(Math.random() * 255), Math.floor(Math.random() * 255)], // 测试join模板
+                effect: Math.random() > 0.5 ? "rainbow" : "static",
+                color_mode: "rgb",
+                friendly_name: "高级智能灯光",
+                supported_features: 147,
+                power_consumption: (Math.random() * 20 + 5).toFixed(1)
+            };
+
+            const topic = "linknlinkedge/light/advanced_light/status";
+            mqttClient.publish(topic, JSON.stringify(state), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(state));
+            showMessage('高级灯光状态已上报（测试多种Value Template）', 'success');
+        }
+
+        // 测试高级灯光属性
+        function testAdvancedLightAttributes() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const attributes = {
+                location: "living_room",
+                room: "客厅",
+                power_consumption: (Math.random() * 20 + 5).toFixed(1),
+                last_seen: new Date().toISOString(),
+                firmware_version: "2.1." + Math.floor(Math.random() * 10),
+                wifi_signal: Math.floor(Math.random() * 20 - 60),
+                energy_today: (Math.random() * 2).toFixed(2),
+                total_runtime: Math.floor(Math.random() * 10000),
+                color_temperature_range: [2000, 6500],
+                supported_effects: ["rainbow", "static", "breathing", "strobe"]
+            };
+
+            const topic = "linknlinkedge/light/advanced_light/attributes";
+            mqttClient.publish(topic, JSON.stringify(attributes), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(attributes));
+            showMessage('高级灯光属性已更新', 'success');
+        }
+
+        // 测试开关发现
+        function testSwitchDiscovery() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "测试智能开关",
+                unique_id: "test_switch_001",
+                device_class: "switch",
+                state_topic: "linknlinkedge/switch/test_switch/status",
+                command_topic: "linknlinkedge/switch/test_switch/set",
+                availability_topic: "linknlinkedge/switch/test_switch/availability",
+                json_attributes_topic: "linknlinkedge/switch/test_switch/attributes",
+                value_template: "{{ value_json.state if value_json.state is defined else 'off' }}",
+                payload_available: "online",
+                payload_not_available: "offline",
+                payload_on: "ON",
+                payload_off: "OFF",
+                state_on: "ON",
+                state_off: "OFF",
+                device: {
+                    identifiers: ["test_switch_001"],
+                    name: "测试智能开关",
+                    manufacturer: "Test Manufacturer",
+                    model: "Test Switch",
+                    sw_version: "1.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/switch/test_switch/config";
+            mqttClient.publish(topic, JSON.stringify(config, null, 2), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(config, null, 2));
+            showMessage('智能开关发现消息已发送', 'success');
+        }
+
+        // 测试开关控制
+        function testSwitchControl() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const topic = "linknlinkedge/switch/test_switch/set";
+            const payload = "ON";
+            mqttClient.publish(topic, payload, { qos: 1, retain: false });
+            addLog('发送', topic, payload);
+            showMessage('开关控制命令已发送', 'success');
+        }
+
+        // 测试空调发现
+        function testClimateDiscovery() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "测试空调控制器",
+                unique_id: "test_climate_001",
+                device_class: "climate",
+                current_temperature_topic: "linknlinkedge/climate/test_climate/status",
+                temperature_command_topic: "linknlinkedge/climate/test_climate/set",
+                temperature_state_topic: "linknlinkedge/climate/test_climate/status",
+                mode_command_topic: "linknlinkedge/climate/test_climate/set",
+                mode_state_topic: "linknlinkedge/climate/test_climate/status",
+                fan_mode_command_topic: "linknlinkedge/climate/test_climate/set",
+                fan_mode_state_topic: "linknlinkedge/climate/test_climate/status",
+                availability_topic: "linknlinkedge/climate/test_climate/availability",
+                json_attributes_topic: "linknlinkedge/climate/test_climate/attributes",
+                value_template: "{{ value_json.state if value_json.state is defined else 'off' }}",
+                payload_available: "online",
+                payload_not_available: "offline",
+                modes: ["off", "auto", "cool", "heat", "dry", "fan_only"],
+                fan_modes: ["auto", "low", "medium", "high"],
+                min_temp: 16,
+                max_temp: 30,
+                temp_step: 1,
+                temperature_unit: "C",
+                device: {
+                    identifiers: ["test_climate_001"],
+                    name: "测试空调控制器",
+                    manufacturer: "Test Manufacturer",
+                    model: "Test AC",
+                    sw_version: "1.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/climate/test_climate/config";
+            mqttClient.publish(topic, JSON.stringify(config, null, 2), { qos: 1, retain: false });
+            addLog('发送', topic, JSON.stringify(config, null, 2));
+            showMessage('空调控制器发现消息已发送', 'success');
+        }
+
+        // 测试空调控制
+        function testClimateControl() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const commands = [
+                { topic: "linknlinkedge/climate/test_climate/mode/set", payload: "cool" },
+                { topic: "linknlinkedge/climate/test_climate/target_temperature/set", payload: "24" },
+                { topic: "linknlinkedge/climate/test_climate/fan_mode/set", payload: "auto" }
+            ];
+
+            commands.forEach(cmd => {
+                mqttClient.publish(cmd.topic, cmd.payload, { qos: 1, retain: false });
+                addLog('发送', cmd.topic, cmd.payload);
+            });
+
+            showMessage('空调控制命令已发送', 'success');
+        }
+
+        // 获取下一个消息ID
+        function getNextMessageId() {
+            return messageIdCounter++;
+        }
+
+        // WebSocket连接功能
+        function connectWebSocket() {
+            if (wsConnected) {
+                showMessage('WebSocket已连接', 'warning');
+                return;
+            }
+
+            const wsUrl = `ws://${window.location.hostname}:${window.location.port}/linknlinkedge/api/websocket`;
+            wsClient = new WebSocket(wsUrl);
+
+            wsClient.onopen = function() {
+                wsConnected = true;
+                updateWebSocketStatus('已连接', 'connected');
+                addWebSocketMessage('WebSocket连接成功', 'success');
+                
+                // 发送认证消息
+                const authMessage = {
+                    type: "auth",
+                    access_token: "test_token",
+                    id: getNextMessageId()
+                };
+                wsClient.send(JSON.stringify(authMessage));
+            };
+
+            wsClient.onmessage = function(event) {
+                try {
+                    // 处理可能包含多个JSON消息的情况
+                    const data = event.data;
+                    const messages = data.split('\n').filter(msg => msg.trim());
+                    
+                    messages.forEach(msg => {
+                        try {
+                            const message = JSON.parse(msg);
+                            handleWebSocketMessage(message);
+                        } catch (e) {
+                            addWebSocketMessage(`收到消息: ${msg}`, 'info');
+                        }
+                    });
+                } catch (e) {
+                    addWebSocketMessage(`收到消息: ${event.data}`, 'info');
+                }
+            };
+
+            wsClient.onclose = function() {
+                wsConnected = false;
+                updateWebSocketStatus('已断开', 'disconnected');
+                addWebSocketMessage('WebSocket连接已断开', 'warning');
+            };
+
+            wsClient.onerror = function(error) {
+                addWebSocketMessage(`WebSocket错误: ${error}`, 'error');
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (wsClient) {
+                wsClient.close();
+                wsClient = null;
+            }
+        }
+
+        function updateWebSocketStatus(status, className) {
+            const statusElement = document.getElementById('wsStatus');
+            const connectionStatusElement = document.getElementById('wsConnectionStatus');
+            
+            statusElement.textContent = status;
+            statusElement.className = `status ${className}`;
+            connectionStatusElement.textContent = status;
+            
+            // 更新按钮状态
+            const connectBtn = document.getElementById('wsConnectBtn');
+            const disconnectBtn = document.getElementById('wsDisconnectBtn');
+            
+            if (wsConnected) {
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
+            } else {
+                connectBtn.style.display = 'inline-block';
+                disconnectBtn.style.display = 'none';
+            }
+        }
+
+        function addWebSocketMessage(message, type = 'info', jsonData = null) {
+            const messagesContainer = document.getElementById('wsMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `websocket-message message-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            // 如果是原始JSON消息，添加复制按钮
+            if (type === 'raw' && jsonData) {
+                const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <strong>[${timestamp}]</strong>
+                        <button class="copy-btn" onclick="copyJsonMessage('${messageId}')" title="复制JSON">
+                            📋 复制
+                        </button>
+                    </div>
+                    <div class="message-content" id="${messageId}">${message}</div>
+                `;
+                // 存储JSON数据用于复制
+                messageDiv.setAttribute('data-json', JSON.stringify(jsonData));
+            } else {
+                messageDiv.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // 限制消息数量
+            const messages = messagesContainer.children;
+            if (messages.length > 100) {
+                messagesContainer.removeChild(messages[0]);
+            }
+        }
+
+        function handleWebSocketMessage(message) {
+            // 显示原始JSON消息
+            addWebSocketMessage(`原始消息: ${JSON.stringify(message, null, 2)}`, 'raw', message);
+            
+            // 处理消息ID
+            if (message.id) {
+                console.log('收到回复消息，ID:', message.id);
+            }
+            
+            // 同时显示简化的处理信息
+            if (message.type === 'event') {
+                if (message.event) {
+                    const eventType = message.event.event_type;
+                    const eventData = message.event.data;
+                    
+                    switch (eventType) {
+                        case 'device_registry_updated':
+                            addWebSocketMessage(`📱 设备注册更新: ${eventData.device_id} (${eventData.action})`, 'device');
+                            break;
+                        case 'entity_registry_updated':
+                            addWebSocketMessage(`🔧 实体注册更新: ${eventData.entity_id} (${eventData.action})`, 'entity');
+                            break;
+                        case 'state_changed':
+                            addWebSocketMessage(`🔄 状态变更: ${eventData.entity_id} -> ${eventData.new_state.state}`, 'state');
+                            break;
+                        case 'mqtt_command_received':
+                            addWebSocketMessage(`🎮 MQTT控制命令: ${eventData.entity_id} -> ${eventData.payload}`, 'command');
+                            break;
+                        default:
+                            addWebSocketMessage(`📡 事件: ${eventType}`, 'info');
+                    }
+                }
+            } else if (message.type === 'result') {
+                addWebSocketMessage(`✅ 结果: ${JSON.stringify(message.result, null, 2)}`, 'info');
+            } else if (message.type === 'error') {
+                addWebSocketMessage(`❌ 错误: ${message.error.message}`, 'error');
+            } else {
+                addWebSocketMessage(`📨 其他消息类型: ${message.type}`, 'info');
+            }
+        }
+
+        function clearWebSocketMessages() {
+            const messagesContainer = document.getElementById('wsMessages');
+            messagesContainer.innerHTML = '<div class="websocket-message">消息已清空</div>';
+        }
+
+        // 复制JSON消息到剪贴板
+        function copyJsonMessage(messageId) {
+            const messageElement = document.getElementById(messageId);
+            if (!messageElement) {
+                showMessage('消息元素未找到', 'error');
+                return;
+            }
+
+            // 获取父级消息容器
+            const messageContainer = messageElement.closest('.websocket-message');
+            if (!messageContainer) {
+                showMessage('消息容器未找到', 'error');
+                return;
+            }
+
+            // 获取存储的JSON数据
+            const jsonData = messageContainer.getAttribute('data-json');
+            if (!jsonData) {
+                showMessage('JSON数据未找到', 'error');
+                return;
+            }
+
+            try {
+                // 解析并格式化JSON
+                const parsedJson = JSON.parse(jsonData);
+                const formattedJson = JSON.stringify(parsedJson, null, 2);
+                
+                // 复制到剪贴板
+                navigator.clipboard.writeText(formattedJson).then(() => {
+                    showMessage('JSON已复制到剪贴板', 'success');
+                    
+                    // 临时改变按钮文本
+                    const copyBtn = messageContainer.querySelector('.copy-btn');
+                    if (copyBtn) {
+                        const originalText = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '✅ 已复制';
+                        copyBtn.style.backgroundColor = '#28a745';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalText;
+                            copyBtn.style.backgroundColor = '';
+                        }, 2000);
+                    }
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                    showMessage('复制失败，请手动复制', 'error');
+                });
+            } catch (err) {
+                console.error('JSON解析失败:', err);
+                showMessage('JSON格式错误', 'error');
+            }
+        }
+
+        // 发送设备注册表列表请求
+        function sendDeviceRegistryList() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "config/device_registry/list",
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送请求: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送实体注册表列表请求
+        function sendEntityRegistryList() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "config/entity_registry/list",
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送请求: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送灯光切换控制
+        function sendLightToggle() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "light",
+                service: "toggle",
+                return_response: false,
+                service_data: {
+                    entity_id: "light.test_light"
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送灯光切换: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送灯光开启控制
+        function sendLightTurnOn() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "light",
+                service: "turn_on",
+                return_response: false,
+                service_data: {
+                    entity_id: "light.test_light"
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送灯光开启: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送灯光关闭控制
+        function sendLightTurnOff() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "light",
+                service: "turn_off",
+                return_response: false,
+                service_data: {
+                    entity_id: "light.test_light"
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送灯光关闭: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送灯光亮度控制
+        function sendLightBrightness() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "light",
+                service: "turn_on",
+                return_response: false,
+                service_data: {
+                    entity_id: "light.test_light",
+                    brightness: 128
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送亮度调节: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送开关切换控制
+        function sendSwitchToggle() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "switch",
+                service: "toggle",
+                return_response: false,
+                service_data: {
+                    entity_id: "switch.test_switch"
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送开关切换: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送开关开启控制
+        function sendSwitchTurnOn() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "switch",
+                service: "turn_on",
+                return_response: false,
+                service_data: {
+                    entity_id: "switch.test_switch"
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送开关开启: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送开关关闭控制
+        function sendSwitchTurnOff() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "switch",
+                service: "turn_off",
+                return_response: false,
+                service_data: {
+                    entity_id: "switch.test_switch"
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送开关关闭: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送空调模式控制
+        function sendClimateMode() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "climate",
+                service: "set_hvac_mode",
+                return_response: false,
+                service_data: {
+                    entity_id: "climate.test_climate",
+                    hvac_mode: "cool"
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送空调模式: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送灯光颜色控制
+        function sendLightColor() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "light",
+                service: "turn_on",
+                return_response: false,
+                service_data: {
+                    entity_id: "light.test_light",
+                    rgb_color: [255, 0, 0] // 红色
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送灯光颜色: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送灯光颜色模式控制
+        function sendLightColorMode() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "light",
+                service: "turn_on",
+                return_response: false,
+                service_data: {
+                    entity_id: "light.test_light",
+                    color_mode: "hs",
+                    hs_color: [120, 100] // 绿色，饱和度100%
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送颜色模式: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 发送灯光色温控制
+        function sendLightColorTemp() {
+            if (!wsConnected) {
+                showMessage('请先连接WebSocket', 'error');
+                return;
+            }
+
+            const message = {
+                type: "call_service",
+                domain: "light",
+                service: "turn_on",
+                return_response: false,
+                service_data: {
+                    entity_id: "light.test_light",
+                    color_temp: 3000 // 暖白色
+                },
+                id: getNextMessageId()
+            };
+
+            wsClient.send(JSON.stringify(message));
+            addWebSocketMessage(`📤 发送色温调节: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+
+        // 高级灯光测试
+        function testAdvancedLight() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            showMessage('开始高级灯光测试...', 'info');
+
+            // 1. 发送设备发现
+            testLightDiscovery();
+            
+            setTimeout(() => {
+                // 2. 发送设备上线
+                mqttClient.publish("linknlinkedge/light/test_light/online", "online", { qos: 1, retain: false });
+                addLog('发送', "linknlinkedge/light/test_light/online", "online");
+                
+                setTimeout(() => {
+                    // 3. 测试不同亮度
+                    const brightnessLevels = [0, 64, 128, 192, 255];
+                    let index = 0;
+                    
+                    const testBrightness = () => {
+                        if (index < brightnessLevels.length) {
+                            const brightness = brightnessLevels[index];
+                            const stateData = {
+                                state: brightness > 0 ? "ON" : "OFF",
+                                brightness: brightness,
+                                color_temp: 300,
+                                rgb: [255, 100, 50]
+                            };
+                            
+                            mqttClient.publish("linknlinkedge/light/test_light/status", JSON.stringify(stateData), { qos: 1, retain: false });
+                            addLog('发送', "linknlinkedge/light/test_light/status", `亮度: ${brightness}`);
+                            
+                            index++;
+                            setTimeout(testBrightness, 1000);
+                        } else {
+                            // 4. 测试颜色变化
+                            const colors = [
+                                [255, 0, 0],     // 红色
+                                [0, 255, 0],     // 绿色
+                                [0, 0, 255],     // 蓝色
+                                [255, 255, 0],   // 黄色
+                                [255, 0, 255],   // 紫色
+                                [0, 255, 255]    // 青色
+                            ];
+                            
+                            let colorIndex = 0;
+                            const testColors = () => {
+                                if (colorIndex < colors.length) {
+                                    const color = colors[colorIndex];
+                                    const stateData = {
+                                        state: "ON",
+                                        brightness: 200,
+                                        color_temp: 300,
+                                        rgb: color
+                                    };
+                                    
+                                    mqttClient.publish("linknlinkedge/light/test_light/status", JSON.stringify(stateData), { qos: 1, retain: false });
+                                    addLog('发送', "linknlinkedge/light/test_light/status", `颜色: [${color.join(', ')}]`);
+                                    
+                                    colorIndex++;
+                                    setTimeout(testColors, 1000);
+                                } else {
+                                    // 5. 发送最终状态
+                                    const finalState = {
+                                        state: "ON",
+                                        brightness: 180,
+                                        color_temp: 350,
+                                        rgb: [200, 150, 100],
+                                        effect: "solid"
+                                    };
+                                    
+                                    mqttClient.publish("linknlinkedge/light/test_light/status", JSON.stringify(finalState), { qos: 1, retain: false });
+                                    addLog('发送', "linknlinkedge/light/test_light/status", "最终状态");
+                                    
+                                    showMessage('高级灯光测试完成！', 'success');
+                                }
+                            };
+                            
+                            setTimeout(testColors, 1000);
+                        }
+                    };
+                    
+                    testBrightness();
+                }, 2000);
+            }, 1000);
+        }
+
+        // Value Template测试
+        function testValueTemplate() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            showMessage('开始Value Template测试...', 'info');
+
+            // 测试不同的模板
+            const templates = [
+                {
+                    name: "基础状态模板",
+                    template: "{{ value_json.state }}",
+                    data: { state: "ON", brightness: 128 }
+                },
+                {
+                    name: "亮度模板",
+                    template: "{{ value_json.brightness | int }}",
+                    data: { state: "ON", brightness: 180.5 }
+                },
+                {
+                    name: "条件模板",
+                    template: "{{ value_json.state if value_json.state != 'unknown' else 'unavailable' }}",
+                    data: { state: "unknown", brightness: 128 }
+                },
+                {
+                    name: "数学运算模板",
+                    template: "{{ value_json.brightness | float * 2 }}",
+                    data: { state: "ON", brightness: 100 }
+                },
+                {
+                    name: "字符串处理模板",
+                    template: "{{ value_json.mode | upper }}",
+                    data: { state: "ON", mode: "color" }
+                }
+            ];
+
+            let index = 0;
+            const testTemplate = () => {
+                if (index < templates.length) {
+                    const test = templates[index];
+                    const stateData = {
+                        ...test.data,
+                        template_test: test.name,
+                        template: test.template
+                    };
+                    
+                    mqttClient.publish("linknlinkedge/light/test_light/status", JSON.stringify(stateData), { qos: 1, retain: false });
+                    addLog('发送', "linknlinkedge/light/test_light/status", `${test.name}: ${test.template}`);
+                    
+                    index++;
+                    setTimeout(testTemplate, 2000);
+                } else {
+                    showMessage('Value Template测试完成！', 'success');
+                }
+            };
+            
+            testTemplate();
+        }
+
+        // 动态主题测试
+        function testDynamicTopics() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            showMessage('开始动态主题测试...', 'info');
+
+            // 测试不同的主题结构
+            const topics = [
+                {
+                    name: "自定义状态主题",
+                    topic: "linknlinkedge/light/test_light/custom_status",
+                    data: { state: "ON", brightness: 200, custom_field: "test_value" }
+                },
+                {
+                    name: "自定义属性主题",
+                    topic: "linknlinkedge/light/test_light/custom_attributes",
+                    data: { battery_level: 90, signal_strength: -30, custom_attr: "dynamic_test" }
+                },
+                {
+                    name: "自定义可用性主题",
+                    topic: "linknlinkedge/light/test_light/custom_availability",
+                    data: "online"
+                }
+            ];
+
+            let index = 0;
+            const testTopic = () => {
+                if (index < topics.length) {
+                    const test = topics[index];
+                    
+                    if (typeof test.data === 'string') {
+                        mqttClient.publish(test.topic, test.data, { qos: 1, retain: false });
+                        addLog('发送', test.topic, test.data);
+                    } else {
+                        mqttClient.publish(test.topic, JSON.stringify(test.data), { qos: 1, retain: false });
+                        addLog('发送', test.topic, JSON.stringify(test.data));
+                    }
+                    
+                    index++;
+                    setTimeout(testTopic, 2000);
+                } else {
+                    showMessage('动态主题测试完成！', 'success');
+                }
+            };
+            
+            testTopic();
+        }
+
+        // 设备上线测试
+        function testDeviceOnline() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            showMessage('开始设备上线测试...', 'info');
+
+            const devices = [
+                { name: '灯光', topic: 'linknlinkedge/light/test_light/online', entity: 'light.test_light' },
+                { name: '开关', topic: 'linknlinkedge/switch/test_switch/online', entity: 'switch.test_switch' },
+                { name: '空调', topic: 'linknlinkedge/climate/test_climate/online', entity: 'climate.test_climate' },
+                { name: '人感', topic: 'linknlinkedge/binary_sensor/motion_sensor/online', entity: 'binary_sensor.motion_sensor' },
+                { name: '湿度', topic: 'linknlinkedge/sensor/test_humidity/online', entity: 'sensor.test_humidity' },
+                { name: '功率', topic: 'linknlinkedge/sensor/power_monitor/online', entity: 'sensor.power_monitor' }
+            ];
+
+            let index = 0;
+            const sendOnline = () => {
+                if (index < devices.length) {
+                    const device = devices[index];
+                    mqttClient.publish(device.topic, 'online', { qos: 1, retain: false });
+                    addLog('发送', device.topic, 'online');
+                    showMessage(`${device.name}设备上线`, 'success');
+                    index++;
+                    setTimeout(sendOnline, 1000);
+                } else {
+                    showMessage('所有设备上线测试完成！', 'success');
+                }
+            };
+
+            sendOnline();
+        }
+
+        // 设备离线测试
+        function testDeviceOffline() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            showMessage('开始设备离线测试...', 'info');
+
+            const devices = [
+                { name: '灯光', topic: 'linknlinkedge/light/test_light/online', entity: 'light.test_light' },
+                { name: '开关', topic: 'linknlinkedge/switch/test_switch/online', entity: 'switch.test_switch' },
+                { name: '空调', topic: 'linknlinkedge/climate/test_climate/online', entity: 'climate.test_climate' },
+                { name: '人感', topic: 'linknlinkedge/binary_sensor/motion_sensor/online', entity: 'binary_sensor.motion_sensor' },
+                { name: '湿度', topic: 'linknlinkedge/sensor/test_humidity/online', entity: 'sensor.test_humidity' },
+                { name: '功率', topic: 'linknlinkedge/sensor/power_monitor/online', entity: 'sensor.power_monitor' }
+            ];
+
+            let index = 0;
+            const sendOffline = () => {
+                if (index < devices.length) {
+                    const device = devices[index];
+                    mqttClient.publish(device.topic, 'offline', { qos: 1, retain: false });
+                    addLog('发送', device.topic, 'offline');
+                    showMessage(`${device.name}设备离线`, 'info');
+                    index++;
+                    setTimeout(sendOffline, 1000);
+                } else {
+                    showMessage('所有设备离线测试完成！', 'success');
+                }
+            };
+
+            sendOffline();
+        }
+
+        // 全设备测试
+        function testAllDevices() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            showMessage('开始全设备测试...', 'info');
+
+            // 1. 发送所有设备发现消息
+            const discoveryFunctions = [
+                testLightDiscovery,
+                testSwitchDiscovery,
+                testClimateDiscovery,
+                testMotionDiscovery,
+                testHumidityDiscovery,
+                testPowerDiscovery
+            ];
+
+            let index = 0;
+            const sendDiscovery = () => {
+                if (index < discoveryFunctions.length) {
+                    discoveryFunctions[index]();
+                    index++;
+                    setTimeout(sendDiscovery, 2000);
+                } else {
+                    // 2. 等待2秒后发送上线消息
+                    setTimeout(() => {
+                        testDeviceOnline();
+                    }, 2000);
+                }
+            };
+
+            sendDiscovery();
+        }
+        // 发送人感测试
+        function sendMotionSensor() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            // 人感传感器应该发送状态消息，不是控制消息
+            const state = {
+                motion_detected: Math.random() > 0.5, // 随机生成检测状态
+                timestamp: new Date().toISOString(),
+                confidence: Math.floor(Math.random() * 100)
+            };
+
+            const topic = "linknlinkedge/binary_sensor/motion_sensor/status";
+            mqttClient.publish(topic, JSON.stringify(state), { qos: 1 });
+            showMessage(`人感传感器状态已发送: ${state.motion_detected ? '检测到人' : '无人检测'}`, 'success');
+        }
+
+        // 测试人感传感器发现
+        function testMotionDiscovery() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "人感传感器",
+                unique_id: "motion_sensor_001",
+                device_class: "motion",
+                state_topic: "linknlinkedge/binary_sensor/motion_sensor/status",
+                availability_topic: "linknlinkedge/binary_sensor/motion_sensor/availability",
+                json_attributes_topic: "linknlinkedge/binary_sensor/motion_sensor/attributes",
+                value_template: "{{ value_json.motion_detected if value_json.motion_detected is defined else false }}",
+                payload_available: "online",
+                payload_not_available: "offline",
+                device: {
+                    identifiers: ["motion_sensor_001"],
+                    name: "人感传感器设备",
+                    model: "Motion Sensor Pro",
+                    manufacturer: "LinkNLink",
+                    sw_version: "1.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/binary_sensor/motion_sensor/config";
+            mqttClient.publish(topic, JSON.stringify(config), { qos: 1, retain: false });
+            showMessage('人感传感器发现消息已发送', 'success');
+        }
+
+        // 发送检测到人状态
+        function sendMotionDetected() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const state = {
+                motion_detected: true,
+                timestamp: new Date().toISOString(),
+                confidence: Math.floor(Math.random() * 30) + 70 // 70-100% 置信度
+            };
+
+            const topic = "linknlinkedge/binary_sensor/motion_sensor/status";
+            mqttClient.publish(topic, JSON.stringify(state), { qos: 1 });
+            showMessage('人感传感器状态已发送: 检测到人', 'success');
+        }
+
+        // 发送无人检测状态
+        function sendMotionNotDetected() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const state = {
+                motion_detected: false,
+                timestamp: new Date().toISOString(),
+                confidence: Math.floor(Math.random() * 30) + 70 // 70-100% 置信度
+            };
+
+            const topic = "linknlinkedge/binary_sensor/motion_sensor/status";
+            mqttClient.publish(topic, JSON.stringify(state), { qos: 1 });
+            showMessage('人感传感器状态已发送: 无人检测', 'success');
+        }
+
+        // 上报人感传感器状态
+        function reportMotionState() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const state = {
+                motion_detected: Math.random() > 0.5, // 随机生成检测状态
+                timestamp: new Date().toISOString(),
+                confidence: Math.floor(Math.random() * 100)
+            };
+
+            const topic = "linknlinkedge/binary_sensor/motion_sensor/status";
+            mqttClient.publish(topic, JSON.stringify(state), { qos: 1 });
+            showMessage(`人感传感器状态已上报: ${state.motion_detected ? '检测到人' : '无人检测'}`, 'success');
+        }
+
+        // 测试湿度传感器发现
+        function testHumidityDiscovery() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "湿度传感器",
+                unique_id: "humidity_sensor_001",
+                device_class: "humidity",
+                state_topic: "linknlinkedge/sensor/test_humidity/status",
+                command_topic: "linknlinkedge/sensor/test_humidity/set",
+                availability_topic: "linknlinkedge/sensor/test_humidity/availability",
+                json_attributes_topic: "linknlinkedge/sensor/test_humidity/attributes",
+                value_template: "{{ value_json.humidity if value_json.humidity is defined else 0 }}",
+                unit_of_measurement: "%",
+                payload_available: "online",
+                payload_not_available: "offline",
+                device: {
+                    identifiers: ["humidity_sensor_001"],
+                    name: "湿度传感器设备",
+                    model: "Humidity Sensor Pro",
+                    manufacturer: "LinkNLink",
+                    sw_version: "1.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/sensor/test_humidity/config";
+            mqttClient.publish(topic, JSON.stringify(config), { qos: 1, retain: false });
+            showMessage('湿度传感器发现消息已发送', 'success');
+        }
+
+        // 上报湿度传感器状态
+        function reportHumidityState() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const humidity = Math.floor(Math.random() * 40) + 30; // 30-70% 湿度
+            const topic = "linknlinkedge/sensor/test_humidity/status";
+            mqttClient.publish(topic, humidity.toString(), { qos: 1 });
+            showMessage(`湿度传感器状态已上报: ${humidity}%`, 'success');
+        }
+
+        // 测试功率监控发现
+        function testPowerDiscovery() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = {
+                name: "功率监控",
+                unique_id: "power_monitor_001",
+                device_class: "power",
+                state_topic: "linknlinkedge/sensor/power_monitor/status",
+                command_topic: "linknlinkedge/sensor/power_monitor/set",
+                availability_topic: "linknlinkedge/sensor/power_monitor/availability",
+                json_attributes_topic: "linknlinkedge/sensor/power_monitor/attributes",
+                value_template: "{{ value_json.power if value_json.power is defined else 0 }}",
+                unit_of_measurement: "W",
+                payload_available: "online",
+                payload_not_available: "offline",
+                device: {
+                    identifiers: ["power_monitor_001"],
+                    name: "功率监控设备",
+                    model: "Power Monitor Pro",
+                    manufacturer: "LinkNLink",
+                    sw_version: "1.0.0"
+                },
+                qos: 1,
+                retain: false
+            };
+
+            const topic = "linknlinkedge/sensor/power_monitor/config";
+            mqttClient.publish(topic, JSON.stringify(config), { qos: 1, retain: false });
+            showMessage('功率监控发现消息已发送', 'success');
+        }
+
+        // 上报功率监控状态
+        function reportPowerState() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const power = Math.floor(Math.random() * 1000) + 100; // 100-1100W 功率
+            const topic = "linknlinkedge/sensor/power_monitor/status";
+            mqttClient.publish(topic, power.toString(), { qos: 1 });
+            showMessage(`功率监控状态已上报: ${power}W`, 'success');
+        }
+
+        // 调用北向RESTful服务（用于设备测试）
+        async function callRestfulService(domain, service, entityId, serviceData = {}) {
+            // 构建北向API请求数据，格式类似Home Assistant
+            const data = {
+                entity_id: entityId,
+                ...serviceData
+            };
+
+            try {
+                // 调用北向HTTP接口，格式: /linknlinkedge/api/services/<domain>/<service>
+                const response = await fetch(`/linknlinkedge/api/services/${domain}/${service}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer TOKEN', // 北向接口需要认证
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage(`控制成功: ${domain}.${service}`, 'success');
+                    console.log('北向API控制结果:', result);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || '控制失败');
+                }
+            } catch (err) {
+                showMessage(`控制失败: ${err.message}`, 'error');
+                console.error('北向API控制错误:', err);
+            }
+        }
+
+        // 发送自定义状态上报
+        function sendCustomStateReport() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const entityId = document.getElementById('stateEntityId').value;
+            const stateValue = document.getElementById('stateValue').value;
+            const attributesText = document.getElementById('stateAttributes').value;
+
+            if (!entityId || !stateValue) {
+                showMessage('请填写实体ID和状态值', 'error');
+                return;
+            }
+
+            // 解析实体ID获取主题
+            const parts = entityId.split('.');
+            if (parts.length !== 2) {
+                showMessage('实体ID格式错误，应为: domain.object_id', 'error');
+                return;
+            }
+
+            const domain = parts[0];
+            const objectId = parts[1];
+            const topic = `linknlinkedge/${domain}/${objectId}/state`;
+
+            // 构建payload
+            let payload;
+            try {
+                if (attributesText.trim()) {
+                    const attributes = JSON.parse(attributesText);
+                    payload = JSON.stringify(attributes);
+                } else {
+                    payload = stateValue;
+                }
+            } catch (e) {
+                showMessage('属性JSON格式错误', 'error');
+                return;
+            }
+
+            // 发送MQTT消息
+            mqttClient.publish(topic, payload, { qos: 1, retain: false });
+            addLog('状态上报', topic, payload);
+            showMessage(`状态上报已发送: ${entityId} -> ${stateValue}`, 'success');
+        }
+
+        // 加载预设状态
+        function loadPresetStates() {
+            const presets = [
+                {
+                    name: "温度传感器",
+                    entityId: "sensor.test_temperature",
+                    stateValue: "24.8",
+                    attributes: '{"temperature": "24.8", "unit": "°C", "quality": "excellent", "status": "active", "timestamp": "' + new Date().toISOString() + '"}'
+                },
+                {
+                    name: "智能灯光",
+                    entityId: "light.test_light",
+                    stateValue: "on",
+                    attributes: '{"brightness": 128, "color_mode": "brightness", "friendly_name": "Test Light", "supported_color_modes": ["brightness"], "supported_features": 40}'
+                },
+                {
+                    name: "智能开关",
+                    entityId: "switch.test_switch",
+                    stateValue: "on",
+                    attributes: '{"friendly_name": "Test Switch"}'
+                },
+                {
+                    name: "空调控制器",
+                    entityId: "climate.test_climate",
+                    stateValue: "cool",
+                    attributes: '{"temperature": 22, "current_temperature": 24, "hvac_modes": ["off", "cool", "heat"], "friendly_name": "Test AC"}'
+                }
+            ];
+
+            const presetHtml = presets.map((preset, index) => 
+                `<button class="btn btn-sm" onclick="loadPreset(${index})">${preset.name}</button>`
+            ).join(' ');
+
+            showMessage(`预设状态: ${presetHtml}`, 'info');
+        }
+
+        // 加载预设
+        function loadPreset(index) {
+            const presets = [
+                {
+                    entityId: "sensor.test_temperature",
+                    stateValue: "24.8",
+                    attributes: '{"temperature": "24.8", "unit": "°C", "quality": "excellent", "status": "active", "timestamp": "' + new Date().toISOString() + '"}'
+                },
+                {
+                    entityId: "light.test_light",
+                    stateValue: "on",
+                    attributes: '{"brightness": 128, "color_mode": "brightness", "friendly_name": "Test Light", "supported_color_modes": ["brightness"], "supported_features": 40}'
+                },
+                {
+                    entityId: "switch.test_switch",
+                    stateValue: "on",
+                    attributes: '{"friendly_name": "Test Switch"}'
+                },
+                {
+                    entityId: "climate.test_climate",
+                    stateValue: "cool",
+                    attributes: '{"temperature": 22, "current_temperature": 24, "hvac_modes": ["off", "cool", "heat"], "friendly_name": "Test AC"}'
+                }
+            ];
+
+            const preset = presets[index];
+            document.getElementById('stateEntityId').value = preset.entityId;
+            document.getElementById('stateValue').value = preset.stateValue;
+            document.getElementById('stateAttributes').value = preset.attributes;
+        }
+
+        // 控制类设备状态上报函数
+        function reportLightState() {
+            document.getElementById('stateEntityId').value = 'light.test_light';
+            document.getElementById('stateValue').value = 'on';
+            document.getElementById('stateAttributes').value = '{"brightness": 128, "color_mode": "brightness", "friendly_name": "Test Light", "supported_color_modes": ["brightness"], "supported_features": 40}';
+            showMessage('已加载灯光状态模板，请修改后点击"发送状态上报"', 'info');
+        }
+
+        function reportSwitchState() {
+            document.getElementById('stateEntityId').value = 'switch.test_switch';
+            document.getElementById('stateValue').value = 'on';
+            document.getElementById('stateAttributes').value = '{"friendly_name": "Test Switch"}';
+            showMessage('已加载开关状态模板，请修改后点击"发送状态上报"', 'info');
+        }
+
+        function reportClimateState() {
+            document.getElementById('stateEntityId').value = 'climate.test_climate';
+            document.getElementById('stateValue').value = 'cool';
+            document.getElementById('stateAttributes').value = '{"temperature": 22, "current_temperature": 24, "hvac_modes": ["off", "cool", "heat"], "friendly_name": "Test AC"}';
+            showMessage('已加载空调状态模板，请修改后点击"发送状态上报"', 'info');
+        }
+
+        // 设备上线/下线控制
+        function setDeviceOnline(deviceType) {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const deviceTopics = {
+                'temperature': "linknlinkedge/sensor/test_temperature/online",
+                'light': "linknlinkedge/light/test_light/online",
+                'switch': "linknlinkedge/switch/test_switch/online",
+                'climate': "linknlinkedge/climate/test_climate/online",
+                'humidity': "linknlinkedge/sensor/test_humidity/online",
+                'power': "linknlinkedge/sensor/power_monitor/online",
+                'illuminance': "linknlinkedge/sensor/light_sensor/online",
+                'button': "linknlinkedge/button/test_button/online"
+            };
+
+            const topic = deviceTopics[deviceType];
+            if (topic) {
+                mqttClient.publish(topic, "online", { qos: 1, retain: false });
+                addLog('设备上线', topic, "online");
+                showMessage(`${deviceType}设备已上线`, 'success');
+            } else {
+                showMessage('未知设备类型', 'error');
+            }
+        }
+
+        function setDeviceOffline(deviceType) {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const deviceTopics = {
+                'temperature': "linknlinkedge/sensor/test_temperature/online",
+                'light': "linknlinkedge/light/test_light/online",
+                'switch': "linknlinkedge/switch/test_switch/online",
+                'climate': "linknlinkedge/climate/test_climate/online",
+                'humidity': "linknlinkedge/sensor/test_humidity/online",
+                'power': "linknlinkedge/sensor/power_monitor/online",
+                'illuminance': "linknlinkedge/sensor/light_sensor/online",
+                'button': "linknlinkedge/button/test_button/online"
+            };
+
+            const topic = deviceTopics[deviceType];
+            if (topic) {
+                mqttClient.publish(topic, "offline", { qos: 1, retain: false });
+                addLog('设备下线', topic, "offline");
+                showMessage(`${deviceType}设备已下线`, 'warning');
+            } else {
+                showMessage('未知设备类型', 'error');
+            }
+        }
+
+        function testAllDevices() {
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            // 依次测试所有设备
+            setTimeout(() => testTemperatureSensor(), 100);
+            setTimeout(() => testLightDiscovery(), 200);
+            setTimeout(() => testSwitchDiscovery(), 300);
+            setTimeout(() => testClimateDiscovery(), 400);
+            
+            showMessage('开始测试所有设备...', 'info');
+        }
+
+        // 页面加载完成后绑定事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定WebSocket按钮事件
+            document.getElementById('wsConnectBtn').addEventListener('click', connectWebSocket);
+            document.getElementById('wsDisconnectBtn').addEventListener('click', disconnectWebSocket);
+            
+            // 不自动连接WebSocket，让用户手动连接
+        });
+
+        // 显示消息
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        // 设备类型配置
+        const deviceConfigs = {
+            temperature: {
+                title: '🌡️ 温度传感器',
+                description: '测试温度传感器的设备发现和状态上报',
+                entityId: 'sensor.test_temperature',
+                hasControl: false,
+                controls: []
+            },
+            light: {
+                title: '💡 智能灯光',
+                description: '测试智能灯光的设备发现和控制',
+                entityId: 'light.test_light',
+                hasControl: true,
+                controls: [
+                    { label: '开启', action: 'turn_on', service: 'turn_on' },
+                    { label: '关闭', action: 'turn_off', service: 'turn_off' },
+                    { label: '切换', action: 'toggle', service: 'toggle' },
+                    { label: '亮度50%', action: 'brightness_50', service: 'turn_on', data: { brightness: 128 } },
+                    { label: '亮度100%', action: 'brightness_100', service: 'turn_on', data: { brightness: 255 } },
+                    { label: '红色', action: 'color_red', service: 'turn_on', data: { rgb_color: [255, 0, 0] } },
+                    { label: '绿色', action: 'color_green', service: 'turn_on', data: { rgb_color: [0, 255, 0] } },
+                    { label: '蓝色', action: 'color_blue', service: 'turn_on', data: { rgb_color: [0, 0, 255] } },
+                    { label: '暖白', action: 'color_warm', service: 'turn_on', data: { color_temp: 3000 } },
+                    { label: '冷白', action: 'color_cool', service: 'turn_on', data: { color_temp: 6500 } }
+                ]
+            },
+            switch: {
+                title: '🔌 智能开关',
+                description: '测试智能开关的设备发现和控制',
+                entityId: 'switch.test_switch',
+                hasControl: true,
+                controls: [
+                    { label: '开启', action: 'turn_on', service: 'turn_on' },
+                    { label: '关闭', action: 'turn_off', service: 'turn_off' },
+                    { label: '切换', action: 'toggle', service: 'toggle' }
+                ]
+            },
+            climate: {
+                title: '❄️ 空调控制器',
+                description: '测试空调控制器的设备发现和控制',
+                entityId: 'climate.test_climate',
+                hasControl: true,
+                controls: [
+                    { label: '制冷模式', action: 'mode_cool', service: 'set_hvac_mode', data: { hvac_mode: 'cool' } },
+                    { label: '制热模式', action: 'mode_heat', service: 'set_hvac_mode', data: { hvac_mode: 'heat' } },
+                    { label: '自动模式', action: 'mode_auto', service: 'set_hvac_mode', data: { hvac_mode: 'auto' } },
+                    { label: '关闭', action: 'mode_off', service: 'set_hvac_mode', data: { hvac_mode: 'off' } },
+                    { label: '22°C', action: 'temp_22', service: 'set_temperature', data: { temperature: 22 } },
+                    { label: '24°C', action: 'temp_24', service: 'set_temperature', data: { temperature: 24 } },
+                    { label: '26°C', action: 'temp_26', service: 'set_temperature', data: { temperature: 26 } },
+                    { label: '低风速', action: 'fan_low', service: 'set_fan_mode', data: { fan_mode: 'low' } },
+                    { label: '中风速', action: 'fan_medium', service: 'set_fan_mode', data: { fan_mode: 'medium' } },
+                    { label: '高风速', action: 'fan_high', service: 'set_fan_mode', data: { fan_mode: 'high' } },
+                    { label: '自动风速', action: 'fan_auto', service: 'set_fan_mode', data: { fan_mode: 'auto' } }
+                ]
+            },
+            motion: {
+                title: '👤 人感传感器',
+                description: '测试人感传感器的设备发现和状态上报',
+                entityId: 'binary_sensor.motion_sensor',
+                hasControl: false,
+                controls: [
+                    { label: '检测到人', action: 'motion_detected', service: 'custom', data: { motion_detected: true } },
+                    { label: '无人检测', action: 'motion_not_detected', service: 'custom', data: { motion_detected: false } }
+                ]
+            },
+            humidity: {
+                title: '💧 湿度传感器',
+                description: '测试湿度传感器的设备发现和状态上报',
+                entityId: 'sensor.test_humidity',
+                hasControl: false,
+                controls: []
+            },
+            power: {
+                title: '⚡ 功率监控',
+                description: '测试功率监控设备的设备发现和状态上报',
+                entityId: 'sensor.power_monitor',
+                hasControl: false,
+                controls: []
+            },
+            illuminance: {
+                title: '☀️ 光照传感器',
+                description: '测试光照传感器的设备发现和状态上报',
+                entityId: 'sensor.light_sensor',
+                hasControl: false,
+                controls: []
+            },
+            button: {
+                title: '🔘 按钮传感器',
+                description: '测试按钮传感器的设备发现和状态上报',
+                entityId: 'button.test_button',
+                hasControl: true,
+                controls: [
+                    { label: '按下', action: 'press', service: 'press' },
+                    { label: '长按', action: 'long_press', service: 'press', data: { duration: 3 } },
+                    { label: '双击', action: 'double_press', service: 'press', data: { count: 2 } }
+                ]
+            }
+        };
+
+        // 加载设备测试界面
+        function loadDeviceTestInterface() {
+            const deviceType = document.getElementById('deviceTypeSelect').value;
+            const testInterface = document.getElementById('deviceTestInterface');
+            const controlSection = document.getElementById('deviceControlSection');
+            const controlButtons = document.getElementById('controlButtons');
+            const entityIdInput = document.getElementById('entityIdInput');
+
+            if (!deviceType) {
+                testInterface.style.display = 'none';
+                return;
+            }
+
+            const config = deviceConfigs[deviceType];
+            if (!config) return;
+
+            // 显示测试界面
+            testInterface.style.display = 'block';
+
+            // 更新标题和描述
+            document.getElementById('selectedDeviceTitle').textContent = config.title;
+            document.getElementById('selectedDeviceDescription').textContent = config.description;
+
+            // 设置默认实体ID
+            entityIdInput.value = config.entityId;
+
+            // 显示或隐藏控制区域
+            if (config.hasControl && config.controls.length > 0) {
+                controlSection.style.display = 'block';
+                
+                // 生成控制按钮
+                controlButtons.innerHTML = '';
+                config.controls.forEach(control => {
+                    const button = document.createElement('button');
+                    button.className = 'btn';
+                    button.textContent = control.label;
+                    button.onclick = () => executeDeviceControl(control);
+                    controlButtons.appendChild(button);
+                });
+            } else {
+                controlSection.style.display = 'none';
+            }
+        }
+
+        // 执行设备控制
+        function executeDeviceControl(control) {
+            const entityId = document.getElementById('entityIdInput').value;
+            if (!entityId) {
+                showMessage('请输入实体ID', 'error');
+                return;
+            }
+
+            if (control.service === 'custom') {
+                // 自定义服务（如人感传感器状态）
+                if (control.action === 'motion_detected') {
+                    sendMotionDetected();
+                } else if (control.action === 'motion_not_detected') {
+                    sendMotionNotDetected();
+                }
+            } else {
+                // 标准RESTful服务
+                callRestfulService(control.service.split('_')[0], control.service, entityId, control.data || {});
+            }
+        }
+
+        // 发送设备发现
+        function sendDeviceDiscovery() {
+            const deviceType = document.getElementById('deviceTypeSelect').value;
+            const entityId = document.getElementById('entityIdInput').value;
+            
+            if (!deviceType || !entityId) {
+                showMessage('请选择设备类型并输入实体ID', 'error');
+                return;
+            }
+
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            const config = deviceConfigs[deviceType];
+            if (!config) return;
+
+            // 根据设备类型发送相应的发现消息
+            switch (deviceType) {
+                case 'temperature':
+                    testTemperatureSensor();
+                    break;
+                case 'light':
+                    testLightDiscovery();
+                    break;
+                case 'switch':
+                    testSwitchDiscovery();
+                    break;
+                case 'climate':
+                    testClimateDiscovery();
+                    break;
+                case 'motion':
+                    testMotionDiscovery();
+                    break;
+                case 'humidity':
+                    testHumidityDiscovery();
+                    break;
+                case 'power':
+                    testPowerDiscovery();
+                    break;
+            }
+        }
+
+        // 发送状态上报
+        function sendStatusReport() {
+            const deviceType = document.getElementById('deviceTypeSelect').value;
+            const entityId = document.getElementById('entityIdInput').value;
+            
+            if (!deviceType || !entityId) {
+                showMessage('请选择设备类型并输入实体ID', 'error');
+                return;
+            }
+
+            if (!isConnected) {
+                showMessage('请先连接MQTT', 'error');
+                return;
+            }
+
+            // 根据设备类型发送相应的状态上报
+            switch (deviceType) {
+                case 'temperature':
+                    testTemperatureState();
+                    break;
+                case 'light':
+                    reportLightState();
+                    break;
+                case 'switch':
+                    reportSwitchState();
+                    break;
+                case 'climate':
+                    reportClimateState();
+                    break;
+                case 'motion':
+                    reportMotionState();
+                    break;
+                case 'humidity':
+                    reportHumidityState();
+                    break;
+                case 'power':
+                    reportPowerState();
+                    break;
+            }
+        }
+
+        // 设置设备上线（从下拉菜单）
+        function setDeviceOnlineFromSelect() {
+            const deviceType = document.getElementById('deviceTypeSelect').value;
+            if (deviceType) {
+                setDeviceOnline(deviceType);
+            } else {
+                showMessage('请先选择设备类型', 'error');
+            }
+        }
+
+        // 设置设备下线（从下拉菜单）
+        function setDeviceOfflineFromSelect() {
+            const deviceType = document.getElementById('deviceTypeSelect').value;
+            if (deviceType) {
+                setDeviceOffline(deviceType);
+            } else {
+                showMessage('请先选择设备类型', 'error');
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('系统', 'MQTT测试工具已就绪，请配置连接参数');
+        });
+    </script>
+</body>
+</html>

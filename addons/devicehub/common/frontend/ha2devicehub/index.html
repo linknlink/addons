@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HA2Devicehub 设备管理</title>
+    <link rel="stylesheet" href="/ha2devicehub/frontend/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-home-automation"></i>
+                    <span>HA2Devicehub</span>
+                </div>
+                <p class="subtitle">设备管理中心</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>仪表板</span>
+                </a>
+                <a href="#devices" class="nav-item active" data-section="devices">
+                    <i class="fas fa-microchip"></i>
+                    <span>设备管理</span>
+                </a>
+                <a href="#settings" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>设置</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">设备管理</h1>
+                </div>
+                <div class="header-right">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="connectionStatusDot"></div>
+                        <span id="connectionStatusText">检查中...</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 内容区域 -->
+            <div class="content">
+                <!-- 仪表板区域 -->
+                <div id="dashboard-section" class="section">
+                    <!-- 统计卡片 -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="totalDevices">0</h3>
+                                <p>总设备数</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="addedDevicesCount">0</h3>
+                                <p>已添加设备</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="connectionStatus">离线</h3>
+                                <p>连接状态</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="lastActive">-</h3>
+                                <p>最后活跃</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 快速操作 -->
+                    <div class="quick-actions">
+                        <h3>快速操作</h3>
+                        <div class="action-buttons">
+                            <button id="refreshDevices" class="action-btn primary">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>刷新设备</span>
+                            </button>
+                            <button id="refreshStatus" class="action-btn secondary">
+                                <i class="fas fa-wifi"></i>
+                                <span>检查连接</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设备管理区域 -->
+                <div id="devices-section" class="section active">
+                    <div class="section-header">
+                        <h2>设备管理</h2>
+                        <div class="section-controls">
+                            <div class="search-box">
+                                <input type="text" id="deviceSearch" placeholder="搜索设备..." />
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <button id="refreshDevices" class="btn-primary">
+                                <i class="fas fa-sync-alt"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 设备列表 -->
+                    <div class="devices-container">
+                        <div class="devices-tabs">
+                            <button class="tab-btn active" data-tab="available">可添加设备</button>
+                            <!-- 移除已添加设备标签页 -->
+                        </div>
+                        
+                        <div class="tab-content">
+                            <div id="available-devices" class="tab-pane active">
+                                <div id="deviceList" class="device-grid">
+                                    <div class="loading">
+                                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 移除已添加设备标签内容 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设置区域 -->
+                <div id="settings-section" class="section">
+                    <div class="section-header">
+                        <h2>设置</h2>
+                    </div>
+                    
+                    <!-- HA Token 设置 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-key"></i> HA Token 设置</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="form-group">
+                                <label for="haToken">Home Assistant Token</label>
+                                <div class="input-group">
+                                    <input type="password" id="haToken" placeholder="请输入 HA Token" />
+                                    <button type="button" id="toggleToken" class="btn-icon">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="help-text">在 Home Assistant 中生成长期访问令牌</small>
+                            </div>
+                            <button id="saveToken" class="btn-primary">
+                                <i class="fas fa-save"></i> 保存 Token
+                            </button>
+                            <div id="tokenStatus" class="status-message"></div>
+                        </div>
+                    </div>
+
+                    <!-- HA 连接信息 -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-wifi"></i> HA 连接信息</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label>连接状态</label>
+                                    <div class="status-badge" id="connectionStatusBadge">
+                                        <span class="status-dot"></span>
+                                        <span id="connectionStatusText">检查中...</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <label>HA 地址</label>
+                                    <span id="haAddress">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>最后活跃</label>
+                                    <span id="lastActive">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 设备详情模态框 -->
+    <div id="deviceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">设备详情</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="deviceDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="addDevice" class="btn-primary">
+                    <i class="fas fa-plus"></i> 添加设备
+                </button>
+                <button id="cancelAdd" class="btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知区域 -->
+    <div id="notification" class="notification"></div>
+
+    <!-- 引入配置文件 -->
+    <script src="/ha2devicehub/frontend/config.js"></script>
+    <script src="/ha2devicehub/frontend/script.js"></script>
+</body>
+</html>
