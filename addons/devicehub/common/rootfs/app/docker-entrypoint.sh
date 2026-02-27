@@ -5,26 +5,14 @@ echo "=========================================="
 echo "  DeviceHub Addon 启动"
 echo "=========================================="
 
-# ---- 0. 架构适配加载二进制文件 ----
-ARCH=$(uname -m)
-if [ "$ARCH" = "x86_64" ]; then
-    BIN_ARCH="amd64"
-elif [ "$ARCH" = "aarch64" ]; then
-    BIN_ARCH="arm64"
-else
-    echo "错误：不支持的架构 $ARCH"
-    exit 1
-fi
-
-echo "[0/4] 加载 ${BIN_ARCH} 架构二进制文件..."
-cp /app/bin/${BIN_ARCH}/iegcloudaccess /etc/iegcloudaccess/iegcloudaccess
-cp /app/bin/${BIN_ARCH}/ha2devicehub /etc/ha2devicehub/ha2devicehub
-cp /app/bin/${BIN_ARCH}/linknlinkedge /etc/linknlinkedge/linknlinkedge
+echo "[0/4] 加载预置的平台架构二进制文件..."
+cp /app/bin/iegcloudaccess /etc/iegcloudaccess/iegcloudaccess
+cp /app/bin/ha2devicehub /etc/ha2devicehub/ha2devicehub
+cp /app/bin/linknlinkedge /etc/linknlinkedge/linknlinkedge
 
 chmod +x /etc/iegcloudaccess/iegcloudaccess
 chmod +x /etc/ha2devicehub/ha2devicehub
 chmod +x /etc/linknlinkedge/linknlinkedge
-
 
 # ---- 1. 初始化 MySQL 数据目录 ----
 if [ ! -d "/var/lib/mysql/mysql" ]; then

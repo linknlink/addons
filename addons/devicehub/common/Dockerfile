@@ -16,6 +16,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# 定义多架构目标参数 (由 docker buildx 默认注入)
+ARG TARGETARCH
+
 # 创建服务目录
 RUN mkdir -p /etc/iegcloudaccess/output \
     /etc/iegcloudaccess/frontend \
@@ -25,8 +28,8 @@ RUN mkdir -p /etc/iegcloudaccess/output \
     /var/lib/mosquitto \
     /var/log/supervisor
 
-# 复制预编译的可执行文件 (多架构支持)
-COPY bin /app/bin
+# 复制当前架构的预编译可执行文件
+COPY bin/${TARGETARCH:-amd64} /app/bin
 
 # 复制前端页面文件
 COPY frontend/iegcloudaccess/ /etc/iegcloudaccess/frontend/
