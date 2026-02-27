@@ -1,0 +1,25 @@
+Title = "iegcloudaccess"
+
+LogLevel="INFO"
+HttpListenPort = ":1692"
+
+Cluster = "cn"
+LocalDevDisable = false
+LocalMode = false
+DebugId=[]
+[LocalMQTTCfg]
+	Broker = "tcp://127.0.0.1:1883"
+    User = "admin"
+    PassWord = "admin"
+
+[MysqlCfg]
+	IP = "127.0.0.1"
+	Port = "3306"
+	User = "iegcloudaccess"
+	PassWord ="iegcloudaccesspwd"
+	DBName ="iegcloudaccess"
+
+[ClusterConf]
+	DevAccessAddr="" #指定具体的设备接入地址
+    ClusterAddrHash=""# 指定域名hash值
+	DevHttpAddr=""

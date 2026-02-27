@@ -1,0 +1,39 @@
+# LinknLink Edge 配置文件
+server:
+  host: "0.0.0.0"
+  port: 1696
+  prefix: "/linknlinkedge"
+
+database:
+  host: "127.0.0.1"
+  port: 3306
+  username: "linknlink"
+  password: "a1b2c3d4"
+  database: "linknlink_edge"
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime: "1h"
+
+mqtt:
+  broker: "tcp://127.0.0.1:1883"
+  username: "admin"
+  password: "admin"
+  client_id: "linknlink_edge"
+  keepalive: 60
+  clean_session: true
+  discovery_prefix: "linknlinkedge"
+  state_prefix: "linknlinkedge"
+  command_prefix: "linknlinkedge"
+
+websocket:
+  enabled: true
+  port: 0  # 0表示复用HTTP服务器端口
+  ping_interval: "30s"
+  pong_timeout: "10s"
+  read_buffer_size: 1024
+  write_buffer_size: 1024
+
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"

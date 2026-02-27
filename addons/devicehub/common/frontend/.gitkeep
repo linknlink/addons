@@ -1,0 +1,4 @@
+# 请将各服务的前端页面文件放入此目录下对应的子目录：
+# - iegcloudaccess/    (来自 iegcloudaccess/frontend/)
+# - ha2devicehub/      (来自 ixgsubservice/src/module/ha2devicehub/frontend/)
+# - linknlinkedge/     (来自 linknlinkedge/web/)

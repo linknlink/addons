@@ -1,0 +1,20 @@
+Title = "ha2devicehub"
+
+LogLevel="INFO"
+HttpListenPort = ":1691"
+LocalDevEnable = true
+TestUserId = ""
+[IEGMQTTCfg]
+	Broker = "tcp://127.0.0.1:1883"
+	User = "admin"
+	Pass = ""
+
+[HAConfig]
+    Addr = "host.docker.internal:8123"
+
+[MysqlCfg]
+	IP = "127.0.0.1"
+	Port = "3306"
+	User = "ha2devicehub"
+	PassWord ="ha2devicehubpwd"
+	DBName ="ha2devicehub"

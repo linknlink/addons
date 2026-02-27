@@ -1,0 +1,14 @@
+{
+    "name": "DeviceHub",
+    "version": "1.0.0",
+    "slug": "devicehub",
+    "description": "物联网设备中心服务集合（iegcloudaccess、ha2devicehub、linknlinkedge）",
+    "arch": [
+        "aarch64",
+        "amd64"
+    ],
+    "startup": "services",
+    "boot": "auto",
+    "ingress": true,
+    "ingress_port": 1691
+}

@@ -1,0 +1,20 @@
+services:
+  devicehub:
+    build:
+      context: ./common
+      dockerfile: Dockerfile
+    container_name: devicehub
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "1691:1691" # ha2devicehub Web
+      - "1692:1692" # iegcloudaccess Web
+      - "1696:1696" # linknlinkedge Web
+    volumes:
+      - devicehub_mysql:/var/lib/mysql
+      - devicehub_mosquitto:/var/lib/mosquitto
+
+volumes:
+  devicehub_mysql: # 宿主机实际存储在 /var/lib/docker/volumes/devicehub_mysql
+  devicehub_mosquitto: # 宿主机实际存储在 /var/lib/docker/volumes/devicehub_mosquitto
