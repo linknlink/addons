@@ -36,18 +36,18 @@ def find_ha_container():
         # 优先级1：容器名完全匹配
         for container in containers:
             if container.name == 'homeassistant':
-                return container
+                return container, None
         
         # 优先级2：通过标签匹配
         for container in containers:
             labels = container.labels or {}
             if labels.get('io.hass.type') == 'homeassistant':
-                return container
+                return container, None
         
         # 优先级3：容器名包含 homeassistant
         for container in containers:
             if 'homeassistant' in container.name.lower():
-                return container
+                return container, None
         
         return None, "找不到包含 homeassistant 名称的容器"
     except Exception as e:
