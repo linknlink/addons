@@ -5,6 +5,57 @@ echo "=========================================="
 echo "  DeviceHub Addon 启动"
 echo "=========================================="
 
+# 获取本地首选的物理网卡 MAC 地址
+# 返回的 MAC 地址格式为标准的冒号分隔的小写十六进制字符串，例如：00:11:22:33:44:55
+get_physical_mac() {
+    local eth_mac=""
+    local wlan_mac=""
+
+    for iface_path in /sys/class/net/*; do
+        [ -e "$iface_path" ] || continue
+        local iface=$(basename "$iface_path")
+
+        # 1. 过滤 loopback, point-to-point 和常见虚拟网卡 (docker, veth, br 等)
+        if [[ "$iface" == "lo" || "$iface" == docker* || "$iface" == veth* || "$iface" == br-* || "$iface" == ppp* || "$iface" == tun* || "$iface" == tap* ]]; then
+            continue
+        fi
+
+        local mac=""
+        if [ -f "$iface_path/address" ]; then
+            mac=$(cat "$iface_path/address" | tr -d '\n')
+        fi
+
+        # 忽略空的或无效的 MAC
+        if [[ -z "$mac" || "$mac" == "00:00:00:00:00:00" ]]; then
+            continue
+        fi
+
+        # 2. 优先返回以太网卡 (eth, en 开头)
+        if [[ "$iface" == eth* || "$iface" == en* ]]; then
+            if [ -z "$eth_mac" ]; then
+                eth_mac="$mac"
+            fi
+        # 3. 其次返回无线网卡 (wlan, wl 开头)
+        elif [[ "$iface" == wlan* || "$iface" == wl* ]]; then
+            if [ -z "$wlan_mac" ]; then
+                wlan_mac="$mac"
+            fi
+        fi
+    done
+
+    # 4. 获取不到则返回空字符串
+    if [ -n "$eth_mac" ]; then
+        echo "$eth_mac"
+    elif [ -n "$wlan_mac" ]; then
+        echo "$wlan_mac"
+    else
+        echo ""
+    fi
+}
+
+export HOST_MAC=$(get_physical_mac)
+echo "  [INFO] 获取到宿主机 MAC 地址: ${HOST_MAC:-空}"
+
 echo "[0/4] 加载预置的平台架构二进制文件..."
 cp /app/bin/iegcloudaccess /etc/iegcloudaccess/iegcloudaccess
 cp /app/bin/ha2devicehub /etc/ha2devicehub/ha2devicehub
