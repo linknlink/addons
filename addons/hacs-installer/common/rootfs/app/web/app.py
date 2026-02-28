@@ -49,10 +49,10 @@ def find_ha_container():
             if 'homeassistant' in container.name.lower():
                 return container
         
-        return None
+        return None, "找不到包含 homeassistant 名称的容器"
     except Exception as e:
         print(f"查找 HA 容器时出错: {e}")
-        return None
+        return None, str(e)
 
 def run_script_thread(script_path, operation_name, success_msg):
     global operation_state
@@ -119,9 +119,9 @@ def uninstall():
 def restart_ha():
     """重启 Home Assistant 容器"""
     try:
-        container = find_ha_container()
+        container, error_msg = find_ha_container()
         if container is None:
-            return jsonify({'status': 'error', 'message': 'Unable to find Home Assistant container'})
+            return jsonify({'status': 'error', 'message': f'Unable to find Home Assistant container: {error_msg}'})
         
         container_name = container.name
         container.restart(timeout=30)
