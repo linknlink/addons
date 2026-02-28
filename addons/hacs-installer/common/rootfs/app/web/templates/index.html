@@ -304,9 +304,10 @@
         }
 
         function confirmAction() {
+            const action = pendingAction;
             hideConfirm();
-            if (pendingAction) {
-                pendingAction();
+            if (action) {
+                action();
             }
         }
 
