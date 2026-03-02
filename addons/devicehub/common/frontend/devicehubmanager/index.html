@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeviceHub Manager</title>
+    <link rel="stylesheet" href="/manager/frontend/style.css">
+</head>
+<body>
+    <!-- 登录页面（仅 local 模式显示） -->
+    <div id="loginPage" class="page hidden">
+        <div class="login-container">
+            <h1>DeviceHub Manager</h1>
+            <p class="subtitle">请登录以继续</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" id="email" placeholder="请输入邮箱" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码" required />
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtn">登录</button>
+                <div id="loginError" class="error-msg hidden"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 管理页面 -->
+    <div id="mainPage" class="page hidden">
+        <header>
+            <h1>DeviceHub Manager</h1>
+            <div class="header-right">
+                <span id="userInfo"></span>
+                <button class="btn btn-small btn-logout" id="logoutBtn" onclick="doLogout()">登出</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- HA Token 配置 -->
+            <section class="card">
+                <h2>Home Assistant Token</h2>
+                <div class="form-group">
+                    <label for="haToken">HA Token</label>
+                    <div class="input-group">
+                        <input type="password" id="haToken" placeholder="请输入 HA 长效访问令牌" />
+                        <button class="btn btn-icon" id="toggleTokenBtn" onclick="toggleTokenVisibility()">👁</button>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="saveToken()">保存 Token</button>
+                    <button class="btn btn-secondary" onclick="loadToken()">刷新</button>
+                </div>
+                <div id="tokenMsg" class="msg hidden"></div>
+            </section>
+
+            <!-- 系统信息 -->
+            <section class="card">
+                <h2>系统信息</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">运行模式</span>
+                        <span class="info-value" id="authMode">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">HA 地址</span>
+                        <span class="info-value" id="haAddr">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">当前用户</span>
+                        <span class="info-value" id="currentUser">-</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/manager/frontend/script.js"></script>
+</body>
+</html>

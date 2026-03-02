@@ -27,12 +27,13 @@ mkdir -p "${TMP_DIR}"
 mkdir -p "${BIN_DIR}"
 mkdir -p "${FRONTEND_DIR}/iegcloudaccess"
 mkdir -p "${FRONTEND_DIR}/ha2devicehub"
+mkdir -p "${FRONTEND_DIR}/devicehubmanager"
 mkdir -p "${FRONTEND_DIR}/linknlinkedge"
 
 echo "目标架构: ${ARCH}"
 
 # ======= 1. linknlinkedge =======
-PKG_EDGE="linknlinkedge_latest_ieg_${ARCH}.deb"
+PKG_EDGE="linknlinkedge_addon_latest_ieg_${ARCH}.deb"
 echo "=== 下载并提取 linknlinkedge (${PKG_EDGE}) ==="
 wget -q --show-progress "${BASE_URL}/${PKG_EDGE}" -O "${TMP_DIR}/${PKG_EDGE}"
 dpkg-deb -x "${TMP_DIR}/${PKG_EDGE}" "${TMP_DIR}/edge"
@@ -41,7 +42,7 @@ cp -r "${TMP_DIR}/edge/etc/linknlinkedge/web/"* "${FRONTEND_DIR}/linknlinkedge/"
 echo "linknlinkedge 提取成功！"
 
 # ======= 2. iegcloudaccess =======
-PKG_IEG="iegcloudaccess_latest_ieg_${ARCH}.deb"
+PKG_IEG="iegcloudaccess_addon_latest_ieg_${ARCH}.deb"
 echo "=== 下载并提取 iegcloudaccess (${PKG_IEG}) ==="
 wget -q --show-progress "${BASE_URL}/${PKG_IEG}" -O "${TMP_DIR}/${PKG_IEG}"
 dpkg-deb -x "${TMP_DIR}/${PKG_IEG}" "${TMP_DIR}/ieg"
@@ -50,7 +51,7 @@ cp -r "${TMP_DIR}/ieg/etc/iegcloudaccess/frontend/"* "${FRONTEND_DIR}/iegcloudac
 echo "iegcloudaccess 提取成功！"
 
 # ======= 3. ha2devicehub =======
-PKG_HA2="ha2devicehub_latest_ieg_${ARCH}.deb"
+PKG_HA2="ha2devicehub_addon_latest_ieg_${ARCH}.deb"
 echo "=== 下载并提取 ha2devicehub (${PKG_HA2}) ==="
 wget -q --show-progress "${BASE_URL}/${PKG_HA2}" -O "${TMP_DIR}/${PKG_HA2}"
 dpkg-deb -x "${TMP_DIR}/${PKG_HA2}" "${TMP_DIR}/ha2"
@@ -61,6 +62,18 @@ if [ -d "${TMP_DIR}/ha2/etc/ha2devicehub/frontend" ]; then
 fi
 echo "ha2devicehub 提取成功！"
 
+# ======= 4. devicehubmanager =======
+PKG_MGR="devicehubmanager_addon_latest_ieg_${ARCH}.deb"
+echo "=== 下载并提取 devicehubmanager (${PKG_MGR}) ==="
+wget -q --show-progress "${BASE_URL}/${PKG_MGR}" -O "${TMP_DIR}/${PKG_MGR}"
+dpkg-deb -x "${TMP_DIR}/${PKG_MGR}" "${TMP_DIR}/mgr"
+cp "${TMP_DIR}/mgr/etc/devicehubmanager/devicehubmanager" "${BIN_DIR}/"
+# 查找前端文件（如果存在）
+if [ -d "${TMP_DIR}/mgr/etc/devicehubmanager/frontend" ]; then
+    cp -r "${TMP_DIR}/mgr/etc/devicehubmanager/frontend/"* "${FRONTEND_DIR}/devicehubmanager/"
+fi
+echo "devicehubmanager 提取成功！"
+
 # 清理
 rm -rf "${TMP_DIR}"
 
@@ -69,3 +82,4 @@ echo "可执行文件状态:"
 ls -lh "${BIN_DIR}"
 echo "前端目录状态:"
 ls -lh "${FRONTEND_DIR}"
+

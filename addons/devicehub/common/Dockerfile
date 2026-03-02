@@ -24,6 +24,9 @@ RUN mkdir -p /etc/iegcloudaccess/output \
     /etc/iegcloudaccess/frontend \
     /etc/ha2devicehub/output \
     /etc/ha2devicehub/frontend \
+    /etc/devicehubmanager/output \
+    /etc/devicehubmanager/frontend \
+    /etc/devicehubmanager/data \
     /etc/linknlinkedge/web \
     /var/lib/mosquitto \
     /var/log/supervisor
@@ -34,6 +37,7 @@ COPY bin/${TARGETARCH:-amd64} /app/bin
 # 复制前端页面文件
 COPY frontend/iegcloudaccess/ /etc/iegcloudaccess/frontend/
 COPY frontend/ha2devicehub/ /etc/ha2devicehub/frontend/
+COPY frontend/devicehubmanager/ /etc/devicehubmanager/frontend/
 COPY frontend/linknlinkedge/ /etc/linknlinkedge/web/
 
 # 复制配置文件和脚本

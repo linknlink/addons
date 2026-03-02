@@ -1,0 +1,12 @@
+Title = "devicehubmanager"
+
+LogLevel="INFO"
+HttpListenPort = ":1670"
+
+[DeviceHubManagerConfig]
+    AuthMode = "local"
+    HaddonsAddr = ""
+    CloudBaseURL = "https://app-service-chn-17b3df92.linklinkiot.com"
+    HAAddr = ""
+    MdnsEnable = true
+    MdnsInstance = "LinknLink DeviceHub"

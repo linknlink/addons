@@ -8,6 +8,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
+      - "1670:1670" # devicehubmanager Web
       - "1691:1691" # ha2devicehub Web
       - "1692:1692" # iegcloudaccess Web
       - "1696:1696" # linknlinkedge Web

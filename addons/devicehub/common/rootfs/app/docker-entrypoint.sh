@@ -59,10 +59,12 @@ echo "  [INFO] 获取到宿主机 MAC 地址: ${HOST_MAC:-空}"
 echo "[0/4] 加载预置的平台架构二进制文件..."
 cp /app/bin/iegcloudaccess /etc/iegcloudaccess/iegcloudaccess
 cp /app/bin/ha2devicehub /etc/ha2devicehub/ha2devicehub
+cp /app/bin/devicehubmanager /etc/devicehubmanager/devicehubmanager
 cp /app/bin/linknlinkedge /etc/linknlinkedge/linknlinkedge
 
 chmod +x /etc/iegcloudaccess/iegcloudaccess
 chmod +x /etc/ha2devicehub/ha2devicehub
+chmod +x /etc/devicehubmanager/devicehubmanager
 chmod +x /etc/linknlinkedge/linknlinkedge
 
 # ---- 1. 初始化 MySQL 数据目录 ----
@@ -116,11 +118,12 @@ sleep 2
 echo "[4/4] 启动 supervisord（管理所有服务）..."
 echo "=========================================="
 echo "  服务端口："
-echo "    mosquitto:      1883"
-echo "    mariadb:        3306"
-echo "    iegcloudaccess: 1692"
-echo "    ha2devicehub:   1691"
-echo "    linknlinkedge:  1696"
+echo "    mosquitto:         1883"
+echo "    mariadb:           3306"
+echo "    iegcloudaccess:    1692"
+echo "    ha2devicehub:      1691"
+echo "    devicehubmanager:  1670"
+echo "    linknlinkedge:     1696"
 echo "=========================================="
 
 exec /usr/bin/supervisord -n -c /app/supervisord.conf
