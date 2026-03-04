@@ -44,15 +44,11 @@ COPY frontend/linknlinkedge/ /etc/linknlinkedge/web/
 COPY rootfs /
 
 # 设置脚本可执行权限
-RUN chmod +x /app/docker-entrypoint.sh \
-    && chmod +x /app/wait-for-dependencies.sh \
-    && chmod +x /usr/bin/supervisord
+RUN chmod +x /app/docker-entrypoint.sh && \
+    chmod +x /app/init-db.sh
 
-# 修补 devicehubmanager 前端页面的相对路径问题
-RUN mkdir -p /etc/devicehubmanager/module/devicehubmanager \
-    && ln -s /etc/devicehubmanager/frontend /etc/devicehubmanager/module/devicehubmanager/frontend
-
-RUN chown -R mosquitto:mosquitto /var/lib/mosquitto /var/log/mosquitto /var/run/mosquitto
+# 设置 mosquitto 目录权限
+RUN chown -R mosquitto:mosquitto /var/lib/mosquitto
 
 WORKDIR /app
 
