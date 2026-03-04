@@ -6,8 +6,8 @@ set -e
 echo "=== 初始化 iegcloudaccess 数据库 ==="
 mysql -uroot -e "
 CREATE DATABASE IF NOT EXISTS iegcloudaccess DEFAULT CHARACTER SET UTF8;
-CREATE USER IF NOT EXISTS 'iegcloudaccess'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY 'iegcloudaccesspwd';
-ALTER USER IF EXISTS 'iegcloudaccess'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY 'iegcloudaccesspwd';
+CREATE USER IF NOT EXISTS 'iegcloudaccess'@'127.0.0.1' IDENTIFIED BY 'iegcloudaccesspwd';
+ALTER USER IF EXISTS 'iegcloudaccess'@'127.0.0.1' IDENTIFIED BY 'iegcloudaccesspwd';
 GRANT ALL PRIVILEGES ON iegcloudaccess.* TO 'iegcloudaccess'@'127.0.0.1';
 ALTER USER 'iegcloudaccess'@'127.0.0.1' WITH MAX_USER_CONNECTIONS 128;
 "
@@ -16,8 +16,8 @@ echo "    iegcloudaccess 数据库初始化完成"
 echo "=== 初始化 ha2devicehub 数据库 ==="
 mysql -uroot -e "
 CREATE DATABASE IF NOT EXISTS ha2devicehub DEFAULT CHARACTER SET UTF8;
-CREATE USER IF NOT EXISTS 'ha2devicehub'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY 'ha2devicehubpwd';
-ALTER USER IF EXISTS 'ha2devicehub'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY 'ha2devicehubpwd';
+CREATE USER IF NOT EXISTS 'ha2devicehub'@'127.0.0.1' IDENTIFIED BY 'ha2devicehubpwd';
+ALTER USER IF EXISTS 'ha2devicehub'@'127.0.0.1' IDENTIFIED BY 'ha2devicehubpwd';
 GRANT ALL PRIVILEGES ON ha2devicehub.* TO 'ha2devicehub'@'127.0.0.1';
 ALTER USER 'ha2devicehub'@'127.0.0.1' WITH MAX_USER_CONNECTIONS 128;
 "

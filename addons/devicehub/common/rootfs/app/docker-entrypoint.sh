@@ -8,6 +8,18 @@ echo "=========================================="
 # 获取本地首选的物理网卡 MAC 地址
 # 返回的 MAC 地址格式为标准的冒号分隔的小写十六进制字符串，例如：00:11:22:33:44:55
 get_physical_mac() {
+    # 首先尝试直接获取 eth0 的 MAC 地址
+    local mac=""
+    if [ -f "/sys/class/net/eth0/address" ]; then
+        mac=$(cat "/sys/class/net/eth0/address" | tr -d '\n')
+    fi
+    
+    if [[ -n "$mac" && "$mac" != "00:00:00:00:00:00" ]]; then
+        echo "$mac"
+        return
+    fi
+
+    # 如果没有 eth0 或其 MAC 地址无效，则回退到原有的遍历逻辑
     local eth_mac=""
     local wlan_mac=""
 
@@ -20,25 +32,25 @@ get_physical_mac() {
             continue
         fi
 
-        local mac=""
+        local current_mac=""
         if [ -f "$iface_path/address" ]; then
-            mac=$(cat "$iface_path/address" | tr -d '\n')
+            current_mac=$(cat "$iface_path/address" | tr -d '\n')
         fi
 
         # 忽略空的或无效的 MAC
-        if [[ -z "$mac" || "$mac" == "00:00:00:00:00:00" ]]; then
+        if [[ -z "$current_mac" || "$current_mac" == "00:00:00:00:00:00" ]]; then
             continue
         fi
 
         # 2. 优先返回以太网卡 (eth, en 开头)
         if [[ "$iface" == eth* || "$iface" == en* ]]; then
             if [ -z "$eth_mac" ]; then
-                eth_mac="$mac"
+                eth_mac="$current_mac"
             fi
         # 3. 其次返回无线网卡 (wlan, wl 开头)
         elif [[ "$iface" == wlan* || "$iface" == wl* ]]; then
             if [ -z "$wlan_mac" ]; then
-                wlan_mac="$mac"
+                wlan_mac="$current_mac"
             fi
         fi
     done
