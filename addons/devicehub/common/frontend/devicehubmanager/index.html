@@ -1,81 +1,320 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeviceHub Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/manager/frontend/style.css">
 </head>
+
 <body>
-    <!-- 登录页面（仅 local 模式显示） -->
+
+    <!-- 登录页面 -->
     <div id="loginPage" class="page hidden">
-        <div class="login-container">
-            <h1>DeviceHub Manager</h1>
-            <p class="subtitle">请登录以继续</p>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">邮箱</label>
-                    <input type="email" id="email" placeholder="请输入邮箱" required />
+        <div class="login-bg">
+            <div class="login-card">
+                <div class="login-logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <rect width="40" height="40" rx="12" fill="url(#grad1)" />
+                        <defs>
+                            <linearGradient id="grad1" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#6366f1" />
+                                <stop offset="1" stop-color="#8b5cf6" />
+                            </linearGradient>
+                        </defs>
+                        <path
+                            d="M12 20C12 16.686 14.686 14 18 14H22C25.314 14 28 16.686 28 20C28 23.314 25.314 26 22 26H18C14.686 26 12 23.314 12 20Z"
+                            fill="white" fill-opacity="0.9" />
+                        <circle cx="20" cy="20" r="3" fill="url(#grad1)" />
+                    </svg>
                 </div>
-                <div class="form-group">
-                    <label for="password">密码</label>
-                    <input type="password" id="password" placeholder="请输入密码" required />
-                </div>
-                <button type="submit" class="btn btn-primary" id="loginBtn">登录</button>
-                <div id="loginError" class="error-msg hidden"></div>
-            </form>
+                <h1 class="login-title">DeviceHub Manager</h1>
+                <p class="login-subtitle">登录以管理你的设备</p>
+                <form id="loginForm">
+                    <div class="field">
+                        <label for="email">邮箱</label>
+                        <input type="email" id="email" placeholder="your@email.com" required autocomplete="email" />
+                    </div>
+                    <div class="field">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" placeholder="请输入密码" required
+                            autocomplete="current-password" />
+                    </div>
+                    <div class="field" id="clusterGroup">
+                        <label for="cluster">服务器集群</label>
+                        <select id="cluster" class="select-input">
+                            <option value="eu" selected>欧洲 / 国际</option>
+                            <option value="cn">中国大陆</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary full-width" id="loginBtn">
+                        <span class="btn-text">登录</span>
+                    </button>
+                    <div id="loginError" class="alert alert-error hidden"></div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- 管理页面 -->
     <div id="mainPage" class="page hidden">
-        <header>
-            <h1>DeviceHub Manager</h1>
-            <div class="header-right">
-                <span id="userInfo"></span>
-                <button class="btn btn-small btn-logout" id="logoutBtn" onclick="doLogout()">登出</button>
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+                    <rect width="40" height="40" rx="10" fill="url(#grad2)" />
+                    <defs>
+                        <linearGradient id="grad2" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#6366f1" />
+                            <stop offset="1" stop-color="#8b5cf6" />
+                        </linearGradient>
+                    </defs>
+                    <path
+                        d="M12 20C12 16.686 14.686 14 18 14H22C25.314 14 28 16.686 28 20C28 23.314 25.314 26 22 26H18C14.686 26 12 23.314 12 20Z"
+                        fill="white" fill-opacity="0.9" />
+                    <circle cx="20" cy="20" r="3" fill="url(#grad2)" />
+                </svg>
+                <span class="sidebar-logo-text">DeviceHub</span>
             </div>
-        </header>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="overview">
+                    <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
+                    概览
+                </a>
+                <a href="#" class="nav-item" data-tab="token">
+                    <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Token 配置
+                </a>
+                <a href="/manager/debug" target="_blank" class="nav-item hidden" id="nav-debug">
+                    <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 012 0v4a1 1 0 11-2 0V9zm1-5a1 1 0 110 2 1 1 0 010-2z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    接口调试
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-area">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <span class="user-name" id="userInfo">用户</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn" onclick="doLogout()" title="退出登录">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </aside>
 
-        <main>
-            <!-- HA Token 配置 -->
-            <section class="card">
-                <h2>Home Assistant Token</h2>
-                <div class="form-group">
-                    <label for="haToken">HA Token</label>
-                    <div class="input-group">
-                        <input type="password" id="haToken" placeholder="请输入 HA 长效访问令牌" />
-                        <button class="btn btn-icon" id="toggleTokenBtn" onclick="toggleTokenVisibility()">👁</button>
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 概览 Tab -->
+            <div class="tab-pane active" id="tab-overview">
+                <div class="page-header">
+                    <h2 class="page-title">系统概览</h2>
+                    <p class="page-desc">查看 DeviceHub 服务状态与连接信息</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon icon-purple">
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">运行模式</div>
+                            <div class="stat-value" id="authMode">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">HA 地址</div>
+                            <div class="stat-value" id="haAddr">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">当前用户</div>
+                            <div class="stat-value" id="currentUser">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Token 状态</div>
+                            <div class="stat-value" id="tokenStatus">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="cursor: pointer;"
+                        onclick="document.getElementById('actDetail').scrollIntoView({behavior: 'smooth'})">
+                        <div class="stat-icon icon-purple">
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">激活状态</div>
+                            <div class="stat-value" id="summaryActInfo">同步中...</div>
+                        </div>
                     </div>
                 </div>
-                <div class="btn-group">
-                    <button class="btn btn-primary" onclick="saveToken()">保存 Token</button>
-                    <button class="btn btn-secondary" onclick="loadToken()">刷新</button>
-                </div>
-                <div id="tokenMsg" class="msg hidden"></div>
-            </section>
 
-            <!-- 系统信息 -->
-            <section class="card">
-                <h2>系统信息</h2>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">运行模式</span>
-                        <span class="info-value" id="authMode">-</span>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">服务连接状态</h3>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">HA 地址</span>
-                        <span class="info-value" id="haAddr">-</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">当前用户</span>
-                        <span class="info-value" id="currentUser">-</span>
+                    <div class="connection-list">
+                        <div class="conn-item">
+                            <div class="conn-dot" id="haDot"></div>
+                            <div class="conn-info">
+                                <span class="conn-name">Home Assistant</span>
+                                <span class="conn-addr" id="haAddrDetail">检测中...</span>
+                            </div>
+                            <div class="conn-badge" id="haBadge">—</div>
+                        </div>
                     </div>
                 </div>
-            </section>
+
+                <div class="card" id="actDetail" style="margin-top: 24px;">
+                    <div class="card-header"
+                        style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 class="card-title">激活信息</h3>
+                        <button class="btn-secondary btn-sm" onclick="syncActivation()" id="syncActBtn">
+                            <span class="btn-text">同步</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-list" id="actDetailList">
+                            <div class="info-row">
+                                <span class="info-label">设备 DID：</span>
+                                <span class="info-val" id="actDid">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">激活状态：</span>
+                                <span class="info-val" id="actState">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">生效时间：</span>
+                                <span class="info-val" id="actDuration">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">最后同步：</span>
+                                <span class="info-val" id="actSyncTime">-</span>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="info-row">
+                                <span class="info-label">License 状态：</span>
+                                <span class="info-val" id="licState">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token 配置 Tab -->
+            <div class="tab-pane" id="tab-token">
+                <div class="page-header">
+                    <h2 class="page-title">Token 配置</h2>
+                    <p class="page-desc">管理 Home Assistant 长效访问令牌</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">HA 访问令牌</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="field">
+                            <label for="haToken">Long-Lived Access Token</label>
+                            <p class="field-hint">在 Home Assistant → 用户设置 → 安全 中创建长效访问令牌</p>
+                            <div class="input-with-action">
+                                <input type="password" id="haToken"
+                                    placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." />
+                                <button class="btn-icon" id="toggleTokenBtn" onclick="toggleTokenVisibility()"
+                                    title="显示/隐藏">
+                                    <svg id="eyeIcon" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                        <path fill-rule="evenodd"
+                                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="action-row">
+                            <button class="btn-secondary" onclick="loadToken()">
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                刷新
+                            </button>
+                            <button class="btn-primary" onclick="saveToken()">
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                                </svg>
+                                保存 Token
+                            </button>
+                        </div>
+                        <div id="tokenMsg" class="alert hidden"></div>
+                    </div>
+                </div>
+
+                <div class="card info-box">
+                    <div class="card-header">
+                        <h3 class="card-title">如何获取 HA Token？</h3>
+                    </div>
+                    <div class="card-body">
+                        <ol class="steps">
+                            <li>打开 Home Assistant 界面</li>
+                            <li>点击左下角头像 → <strong>用户设置</strong></li>
+                            <li>滚动到底部 → <strong>安全</strong> → 长效访问令牌</li>
+                            <li>点击 <strong>创建令牌</strong>，输入名称后复制令牌</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <script src="/manager/frontend/script.js"></script>
 </body>
+
 </html>

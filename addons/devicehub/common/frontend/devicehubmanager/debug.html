@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeviceHub Manager - 接口调试</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 10px 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .nav-item.active {
+            background-color: #eff6ff;
+            border-left-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            padding: 10px 16px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f9fafb;
+        }
+
+        .result-box {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 6px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status-badge.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="header">
+            DHM APP 接口调试
+        </div>
+        <ul class="nav-list" id="navList">
+            <li class="nav-item active" data-target="panel-lic-get">获取 License</li>
+            <li class="nav-item" data-target="panel-lic-status">License 状态查询</li>
+            <li class="nav-item" data-target="panel-act-status">激活状态查询</li>
+            <li class="nav-item" data-target="panel-act-sync">触发激活同步</li>
+            <li class="nav-item" data-target="panel-device-discover">发现局域网设备 (mDNS)</li>
+            <li class="nav-item" data-target="panel-entity-get">获取 Entity 列表</li>
+            <li class="nav-item" data-target="panel-entity-add">添加 Entity</li>
+            <li class="nav-item" data-target="panel-user-info">获取当前用户信息</li>
+            <li class="nav-item" data-target="panel-sys-info">获取系统状态信息</li>
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="content">
+
+            <!-- License Get -->
+            <div class="panel active" id="panel-lic-get">
+                <div class="panel-header">POST /manager/license/get</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label class="form-label">MAC 地址</label>
+                        <input type="text" id="licGetMac" placeholder="例如: ec0baee652b1">
+                    </div>
+                    <button
+                        onclick="doRequest('POST', '/manager/license/get', {mac: document.getElementById('licGetMac').value}, 'res-lic-get')">发送请求</button>
+                    <div class="result-box" id="res-lic-get"></div>
+                </div>
+            </div>
+
+            <!-- License Status -->
+            <div class="panel" id="panel-lic-status">
+                <div class="panel-header">GET /manager/license/status</div>
+                <div class="panel-body">
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:0;">查询本地缓存的所有 License 记录。</p>
+                    <button onclick="doRequest('GET', '/manager/license/status', null, 'res-lic-status')">发送请求</button>
+                    <div class="result-box" id="res-lic-status"></div>
+                </div>
+            </div>
+
+            <!-- Activation Status -->
+            <div class="panel" id="panel-act-status">
+                <div class="panel-header">GET /manager/activation/status</div>
+                <div class="panel-body">
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:0;">查询当前设备的激活状态以及到期时间。该接口会自动按需触发同步。
+                    </p>
+                    <button
+                        onclick="doRequest('GET', '/manager/activation/status', null, 'res-act-status')">发送请求</button>
+                    <div class="result-box" id="res-act-status"></div>
+                </div>
+            </div>
+
+            <!-- Activation Sync -->
+            <div class="panel" id="panel-act-sync">
+                <div class="panel-header">POST /manager/activation/sync</div>
+                <div class="panel-body">
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:0;">手动强制触发云端设备激活状态同步。</p>
+                    <button onclick="doRequest('POST', '/manager/activation/sync', null, 'res-act-sync')">一键同步</button>
+                    <div class="result-box" id="res-act-sync"></div>
+                </div>
+            </div>
+
+            <!-- Device Discover (mDNS) -->
+            <div class="panel" id="panel-device-discover">
+                <div class="panel-header">GET /manager/device/discover</div>
+                <div class="panel-body">
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:0;">通过 mDNS 服务发现局域网内 iSG 等所有
+                        _linknlink._tcp 形式的设备，过程可能需要 3 秒钟。</p>
+                    <button
+                        onclick="doRequest('GET', '/manager/device/discover', null, 'res-device-discover')">发现设备</button>
+                    <div class="result-box" id="res-device-discover"></div>
+                </div>
+            </div>
+
+            <!-- Entity Get -->
+            <div class="panel" id="panel-entity-get">
+                <div class="panel-header">GET /manager/device/entities</div>
+                <div class="panel-body">
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:0;">获取 HA 中的所有 Entity 分组信息 (代理至
+                        ha2devicehub)</p>
+                    <button onclick="doRequest('GET', '/manager/device/entities', null, 'res-entity-get')">发送请求</button>
+                    <div class="result-box" id="res-entity-get"></div>
+                </div>
+            </div>
+
+            <!-- Entity Add -->
+            <div class="panel" id="panel-entity-add">
+                <div class="panel-header">POST /manager/device/entities</div>
+                <div class="panel-body">
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:0;">向局域网广播添加 Entity 请求 (代理至
+                        ha2devicehub)</p>
+                    <div class="form-group">
+                        <label class="form-label">Request Body (JSON)</label>
+                        <textarea id="entityAddBody">
+{
+    "entityid": "light.living_room",
+    "domain": "light"
+}
+                        </textarea>
+                    </div>
+                    <button onclick="submitEntityAdd()">提交并广播</button>
+                    <div class="result-box" id="res-entity-add"></div>
+                </div>
+            </div>
+
+            <!-- User Info -->
+            <div class="panel" id="panel-user-info">
+                <div class="panel-header">GET /manager/account/info</div>
+                <div class="panel-body">
+                    <button onclick="doRequest('GET', '/manager/account/info', null, 'res-user-info')">发送请求</button>
+                    <div class="result-box" id="res-user-info"></div>
+                </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="panel" id="panel-sys-info">
+                <div class="panel-header">GET /manager/system/info</div>
+                <div class="panel-body">
+                    <button onclick="doRequest('GET', '/manager/system/info', null, 'res-sys-info')">发送请求</button>
+                    <div class="result-box" id="res-sys-info"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 导航切换逻辑
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+
+                this.classList.add('active');
+                document.getElementById(this.dataset.target).classList.add('active');
+            });
+        });
+
+        // 统一请求函数
+        function doRequest(method, url, bodyObj, resElId) {
+            const resEl = document.getElementById(resElId);
+            resEl.style.display = 'block';
+            resEl.textContent = '请求中...';
+
+            const options = {
+                method: method,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            };
+
+            if (bodyObj) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(bodyObj);
+            }
+
+            fetch(url, options)
+                .then(async response => {
+                    const statusText = `HTTP ${response.status} ${response.statusText}`;
+                    let resultData;
+                    const contentType = response.headers.get('content-type');
+                    try {
+                        if (contentType && contentType.includes('application/json')) {
+                            resultData = await response.json();
+                            resultData = JSON.stringify(resultData, null, 2);
+                        } else {
+                            resultData = await response.text();
+                        }
+                    } catch (e) {
+                        resultData = "无法解析响应: " + e;
+                    }
+
+                    resEl.innerHTML = `<div style="color:${response.ok ? '#10b981' : '#ef4444'}; margin-bottom:10px;">${statusText}</div>${resultData}`;
+                })
+                .catch(err => {
+                    resEl.innerHTML = `<div style="color:#ef4444">网络错误 / 请求失败:</div>${err}`;
+                });
+        }
+
+        // Entity 添加特定提交
+        function submitEntityAdd() {
+            let bodyObj;
+            try {
+                bodyObj = JSON.parse(document.getElementById('entityAddBody').value);
+            } catch (e) {
+                alert('JSON 格式错误');
+                return;
+            }
+            doRequest('POST', '/manager/device/entities', bodyObj, 'res-entity-add');
+        }
+    </script>
+</body>
+
+</html>
