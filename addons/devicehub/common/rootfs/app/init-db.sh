@@ -23,6 +23,16 @@ ALTER USER 'ha2devicehub'@'127.0.0.1' WITH MAX_USER_CONNECTIONS 128;
 "
 echo "    ha2devicehub 数据库初始化完成"
 
+echo "=== 初始化 devicehubmanager 数据库 ==="
+mysql -uroot -e "
+CREATE DATABASE IF NOT EXISTS devicehubmanager DEFAULT CHARACTER SET UTF8;
+CREATE USER IF NOT EXISTS 'devicehubmanager'@'127.0.0.1' IDENTIFIED BY 'devicehubmanagerpwd';
+ALTER USER IF EXISTS 'devicehubmanager'@'127.0.0.1' IDENTIFIED BY 'devicehubmanagerpwd';
+GRANT ALL PRIVILEGES ON devicehubmanager.* TO 'devicehubmanager'@'127.0.0.1';
+ALTER USER 'devicehubmanager'@'127.0.0.1' WITH MAX_USER_CONNECTIONS 128;
+"
+echo "    devicehubmanager 数据库初始化完成"
+
 echo "=== 初始化 linknlink_edge 数据库 ==="
 mysql -uroot -e "
 CREATE DATABASE IF NOT EXISTS linknlink_edge CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
