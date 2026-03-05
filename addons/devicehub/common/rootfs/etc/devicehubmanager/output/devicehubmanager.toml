@@ -5,20 +5,11 @@ HttpListenPort = ":1670"
 
 [DeviceHubManagerConfig]
     AuthMode = "haddons"
-    CloudBaseURL = "https://app-service-chn-17b3df92.linklinkiot.com"
     MdnsEnable = true
     MdnsInstance = "LinknLink DeviceHub"
-    # License
-    DevicePlatform = "8710"
-    # Activation
-    ActivationSyncInterval = 240
-    # Entity Proxy
-    Ha2DeviceHubAddr = "http://127.0.0.1:1691"
-    # Debug
-    DebugPageEnable = true
 
 [MysqlCfg]
-	IP = "127.0.0.1"
+	IP = "localhost"
 	Port = "3306"
 	User = "devicehubmanager"
 	PassWord ="devicehubmanagerpwd"
