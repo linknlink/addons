@@ -11,6 +11,11 @@ log_info() { echo -e "${GREEN}[INFO] $1${NC}"; }
 log_warn() { echo -e "${YELLOW}[WARN] $1${NC}"; }
 log_error() { echo -e "${RED}[ERROR] $1${NC}"; }
 
+fail() {
+    log_error "$1"
+    exit 1
+}
+
 HA_CONFIG_PATH="${HA_CONFIG_PATH:-/homeassistant}"
 CUSTOM_COMPONENTS_DIR="$HA_CONFIG_PATH/custom_components"
 HACS_DIR="$CUSTOM_COMPONENTS_DIR/hacs"
@@ -24,62 +29,62 @@ log_info "Home Assistant config directory: $HA_CONFIG_PATH"
 if [ ! -d "$HA_CONFIG_PATH" ]; then
     log_warn "Home Assistant config directory not found: $HA_CONFIG_PATH"
     log_warn "Attempting to create directory (this should generally not happen unless in a test environment)..."
-    mkdir -p "$HA_CONFIG_PATH"
-    if [ ! -d "$HA_CONFIG_PATH" ]; then
-        log_error "Unable to create or access config directory, please check mount path configuration."
-        exit 1
-    fi
+    mkdir -p "$HA_CONFIG_PATH" || fail "Unable to create Home Assistant config directory. Please check the mounted path and write permission."
+    [ -d "$HA_CONFIG_PATH" ] || fail "Unable to access Home Assistant config directory after creation. Please check mount path configuration."
 fi
 
-# 2. 检查网络连接
+# 2. 检查必要命令
+command -v curl >/dev/null 2>&1 || fail "curl is not installed in the container."
+command -v unzip >/dev/null 2>&1 || fail "unzip is not installed in the container."
+
+# 3. 检查网络连接
 log_info "Checking network connection..."
 if ! curl -Is https://github.com -o /dev/null --connect-timeout 5; then
-    log_error "Unable to connect to GitHub, please check network settings or proxy configuration."
-    exit 1
+    fail "Unable to connect to GitHub. Please check network settings, DNS, or proxy configuration."
 fi
 
-# 3. 准备 custom_components 目录
+# 4. 准备 custom_components 目录
 if [ ! -d "$CUSTOM_COMPONENTS_DIR" ]; then
     log_info "Creating custom_components directory..."
-    mkdir -p "$CUSTOM_COMPONENTS_DIR"
+    mkdir -p "$CUSTOM_COMPONENTS_DIR" || fail "Unable to create custom_components directory. Please check write permission of Home Assistant config path."
 fi
 
-# 4. 清理旧安装
+# 5. 清理旧安装
 if [ -d "$HACS_DIR" ]; then
     log_warn "Found old HACS version, removing..."
-    rm -rf "$HACS_DIR"
+    rm -rf "$HACS_DIR" || fail "Unable to remove old HACS directory. Please check file permissions."
 fi
 
-# 5. 下载 HACS
+# 6. 下载 HACS
 log_info "Downloading HACS..."
-if curl -L -o "$DOWNLOAD_PATH" "$DOWNLOAD_URL"; then
+if curl -fL -o "$DOWNLOAD_PATH" "$DOWNLOAD_URL"; then
     log_info "Download complete."
 else
-    log_error "Download failed, please check network connection."
     rm -f "$DOWNLOAD_PATH"
-    exit 1
+    fail "Download failed. Please check network connectivity to GitHub releases."
 fi
 
-# 6. 验证下载文件
-if [ ! -s "$DOWNLOAD_PATH" ]; then
-    log_error "Downloaded file is empty."
-    rm -f "$DOWNLOAD_PATH"
-    exit 1
-fi
+# 7. 验证下载文件
+[ -s "$DOWNLOAD_PATH" ] || { rm -f "$DOWNLOAD_PATH"; fail "Downloaded file is empty. Please retry later."; }
 
-# 7. 解压安装
+# 8. 解压安装
 log_info "Unzipping and installing..."
-mkdir -p "$HACS_DIR"
+mkdir -p "$HACS_DIR" || fail "Unable to create HACS target directory. Please check write permission."
 if unzip -q "$DOWNLOAD_PATH" -d "$HACS_DIR"; then
     log_info "Unzip complete."
 else
-    log_error "Unzip failed."
     rm -f "$DOWNLOAD_PATH"
     rm -rf "$HACS_DIR"
-    exit 1
+    fail "Unzip failed. The downloaded package may be corrupted."
 fi
 
-# 8. 清理临时文件
+# 9. 安装结果校验
+[ -f "$HACS_DIR/__init__.py" ] || {
+    rm -f "$DOWNLOAD_PATH"
+    fail "Installation completed but HACS core files were not found. Please check the package content or try again."
+}
+
+# 10. 清理临时文件
 rm -f "$DOWNLOAD_PATH"
 
 log_info "HACS installed successfully!"

@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HACS Installer</title>
     <style>
+        :root {
+            --success-bg: #d1fae5;
+            --success-text: #065f46;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --muted-bg: #eef2ff;
+            --muted-text: #4338ca;
+            --border-color: #e5e7eb;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f5f5f7;
@@ -99,10 +109,51 @@
 
         .message {
             margin-top: 1rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
             font-size: 0.875rem;
-            color: #6b7280;
             white-space: pre-wrap;
-            word-break: break-all;
+            word-break: break-word;
+            text-align: left;
+            display: none;
+            border: 1px solid transparent;
+        }
+
+        .message.visible {
+            display: block;
+        }
+
+        .message.success {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            border-color: #a7f3d0;
+        }
+
+        .message.error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            border-color: #fecaca;
+        }
+
+        .message.info {
+            background-color: var(--muted-bg);
+            color: var(--muted-text);
+            border-color: #c7d2fe;
+        }
+
+        .message-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .message-detail {
+            font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+
+        .message-detail:empty {
+            display: none;
         }
 
         .progress {
@@ -269,7 +320,10 @@
             <span id="progress-text">Processing...</span>
         </div>
 
-        <div id="result-message" class="message"></div>
+        <div id="result-message" class="message">
+            <div id="result-title" class="message-title"></div>
+            <div id="result-detail" class="message-detail"></div>
+        </div>
     </div>
 
     <!-- 自定义确认弹窗 -->
@@ -288,6 +342,9 @@
     <script>
         // 确认弹窗回调
         let pendingAction = null;
+        let statusPoller = null;
+        let activeOperationId = null;
+        let hacsInstalled = {{ 'true' if installed else 'false' }};
 
         function showConfirm(title, message, action, style) {
             document.getElementById('modal-title').textContent = title;
@@ -311,6 +368,190 @@
             }
         }
 
+        function syncButtonAvailability(isBusy) {
+            document.getElementById('install-btn').disabled = isBusy;
+            document.getElementById('uninstall-btn').disabled = isBusy || !hacsInstalled;
+            document.getElementById('restart-btn').disabled = isBusy;
+        }
+
+        function clearStatusPoller() {
+            if (statusPoller) {
+                clearInterval(statusPoller);
+                statusPoller = null;
+            }
+        }
+
+        function showProgress(message) {
+            document.getElementById('progress').style.display = 'block';
+            document.getElementById('progress-text').textContent = message || 'Processing...';
+        }
+
+        function hideProgress() {
+            document.getElementById('progress').style.display = 'none';
+        }
+
+        function resetResult() {
+            document.getElementById('result-message').className = 'message';
+            document.getElementById('result-title').textContent = '';
+            document.getElementById('result-detail').textContent = '';
+        }
+
+        function showResult(type, message, detail = '') {
+            const resultBox = document.getElementById('result-message');
+            const resultTitle = document.getElementById('result-title');
+            const resultDetail = document.getElementById('result-detail');
+
+            hideProgress();
+            resultBox.className = 'message visible ' + type;
+            resultTitle.textContent = message || '';
+            resultDetail.textContent = detail || '';
+        }
+
+        function applyInstalledState(installed) {
+            const statusBox = document.getElementById('status-box');
+            const installBtn = document.getElementById('install-btn');
+            hacsInstalled = installed;
+
+            if (installed) {
+                statusBox.className = 'status installed';
+                statusBox.textContent = 'HACS Installed';
+                installBtn.textContent = 'Reinstall';
+                installBtn.onclick = function () {
+                    showConfirm('Reinstall HACS', 'This will remove the current HACS and download the latest version. Continue?', function () { startOperation('install'); });
+                };
+            } else {
+                statusBox.className = 'status not-installed';
+                statusBox.textContent = 'HACS Not Installed';
+                installBtn.textContent = 'Install HACS';
+                installBtn.onclick = function () {
+                    startOperation('install');
+                };
+            }
+
+            syncButtonAvailability(false);
+        }
+
+        function applyOperationState(data, options = {}) {
+            const { preserveCompletedState = true } = options;
+
+            if (data.status === 'starting' || data.status === 'running') {
+                activeOperationId = data.operation_id || activeOperationId;
+                showProgress(data.message || 'Processing...');
+                syncButtonAvailability(true);
+                return;
+            }
+
+            if ((data.status === 'success' || data.status === 'error') && !preserveCompletedState) {
+                activeOperationId = null;
+                clearStatusPoller();
+                hideProgress();
+                resetResult();
+                syncButtonAvailability(false);
+                return;
+            }
+
+            if (data.status === 'success') {
+                activeOperationId = null;
+                clearStatusPoller();
+                showResult('success', data.message, data.detail || '');
+                if (data.operation === 'Install') {
+                    applyInstalledState(true);
+                } else if (data.operation === 'Uninstall') {
+                    applyInstalledState(false);
+                }
+                syncButtonAvailability(false);
+                return;
+            }
+
+            if (data.status === 'error') {
+                activeOperationId = null;
+                clearStatusPoller();
+                showResult('error', data.message || 'Operation failed', data.detail || '');
+                syncButtonAvailability(false);
+                return;
+            }
+
+            if (activeOperationId) {
+                showProgress('Preparing operation...');
+                syncButtonAvailability(true);
+                return;
+            }
+
+            clearStatusPoller();
+            hideProgress();
+            resetResult();
+            syncButtonAvailability(false);
+        }
+
+        function fetchOperationState(options = {}) {
+            return fetch('/api/status', { cache: 'no-store' })
+                .then(response => response.json())
+                .then(data => {
+                    applyOperationState(data, options);
+                    return data;
+                });
+        }
+
+        function startOperation(op) {
+            clearStatusPoller();
+            activeOperationId = null;
+            syncButtonAvailability(true);
+            showProgress(op === 'install' ? 'Preparing installation...' : 'Preparing uninstallation...');
+            resetResult();
+
+            fetch('/api/' + op, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        activeOperationId = data.operation_id || null;
+                        showProgress(data.message || 'Processing...');
+                        fetchOperationState();
+                        statusPoller = setInterval(() => {
+                            fetchOperationState();
+                        }, 1000);
+                    } else {
+                        activeOperationId = null;
+                        if (data.message === 'Task already in progress') {
+                            fetchOperationState();
+                            statusPoller = setInterval(() => {
+                                fetchOperationState();
+                            }, 1000);
+                            return;
+                        }
+                        showResult('error', data.message || 'Failed to start operation');
+                        syncButtonAvailability(false);
+                    }
+                })
+                .catch(error => {
+                    activeOperationId = null;
+                    showResult('error', 'Request failed', String(error));
+                    syncButtonAvailability(false);
+                });
+        }
+
+        function restartHA() {
+            clearStatusPoller();
+            activeOperationId = null;
+            syncButtonAvailability(true);
+            showProgress('Restarting Home Assistant...');
+            resetResult();
+
+            fetch('/api/restart_ha', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showResult('success', data.message);
+                    } else {
+                        showResult('error', data.message);
+                    }
+                    syncButtonAvailability(false);
+                })
+                .catch(error => {
+                    showResult('error', 'Request failed', String(error));
+                    syncButtonAvailability(false);
+                });
+        }
+
         // 点击遮罩层关闭弹窗
         document.getElementById('confirm-modal').addEventListener('click', function (e) {
             if (e.target === this) {
@@ -318,114 +559,10 @@
             }
         });
 
-        function setButtonsDisabled(disabled) {
-            document.getElementById('install-btn').disabled = disabled;
-            document.getElementById('uninstall-btn').disabled = disabled;
-            document.getElementById('restart-btn').disabled = disabled;
-        }
-
-        function startOperation(op) {
-            const progress = document.getElementById('progress');
-            const resultMsg = document.getElementById('result-message');
-
-            setButtonsDisabled(true);
-            progress.style.display = 'block';
-            resultMsg.textContent = '';
-
-            fetch('/api/' + op, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        pollStatus();
-                    } else {
-                        showResult('error', data.message);
-                    }
-                })
-                .catch(error => {
-                    showResult('error', 'Request failed: ' + error);
-                });
-        }
-
-        function pollStatus() {
-            const progressText = document.getElementById('progress-text');
-
-            const interval = setInterval(() => {
-                fetch('/api/status')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            clearInterval(interval);
-                            showResult('success', data.message);
-                            // 根据操作类型更新 UI 状态
-                            if (data.operation === 'Install') {
-                                document.getElementById('status-box').className = 'status installed';
-                                document.getElementById('status-box').textContent = 'HACS Installed';
-                                document.getElementById('install-btn').textContent = 'Reinstall';
-                                // 重新绑定点击事件为需要确认的版本
-                                document.getElementById('install-btn').onclick = function () {
-                                    showConfirm('Reinstall HACS', 'This will remove the current HACS and download the latest version. Continue?', function () { startOperation('install'); });
-                                };
-                                setButtonsDisabled(false);
-                            } else if (data.operation === 'Uninstall') {
-                                document.getElementById('status-box').className = 'status not-installed';
-                                document.getElementById('status-box').textContent = 'HACS Not Installed';
-                                document.getElementById('install-btn').textContent = 'Install HACS';
-                                // 重新绑定点击事件为直接安装版本
-                                document.getElementById('install-btn').onclick = function () {
-                                    startOperation('install');
-                                };
-                                setButtonsDisabled(false);
-                                document.getElementById('uninstall-btn').disabled = true;
-                            }
-
-                        } else if (data.status === 'error') {
-                            clearInterval(interval);
-                            showResult('error', data.message);
-                            // 出错时重新加载页面恢复按钮状态
-                            setTimeout(() => location.reload(), 2000);
-                        } else if (data.status === 'running') {
-                            progressText.textContent = data.message;
-                        }
-                    });
-            }, 1000);
-        }
-
-        function restartHA() {
-            const progress = document.getElementById('progress');
-            const resultMsg = document.getElementById('result-message');
-            const progressText = document.getElementById('progress-text');
-
-            setButtonsDisabled(true);
-            progress.style.display = 'block';
-            progressText.textContent = 'Restarting Home Assistant...';
-            resultMsg.textContent = '';
-
-            fetch('/api/restart_ha', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    progress.style.display = 'none';
-                    if (data.status === 'success') {
-                        showResult('success', data.message);
-                    } else {
-                        showResult('error', data.message);
-                    }
-                    setButtonsDisabled(false);
-                })
-                .catch(error => {
-                    progress.style.display = 'none';
-                    showResult('error', 'Request failed: ' + error);
-                    setButtonsDisabled(false);
-                });
-        }
-
-        function showResult(type, message) {
-            const progress = document.getElementById('progress');
-            const resultMsg = document.getElementById('result-message');
-
-            progress.style.display = 'none';
-            resultMsg.textContent = message;
-            resultMsg.style.color = type === 'error' ? '#dc2626' : '#059669';
-        }
+        syncButtonAvailability(false);
+        fetchOperationState({ preserveCompletedState: false }).catch(() => {
+            syncButtonAvailability(false);
+        });
     </script>
 </body>
 
