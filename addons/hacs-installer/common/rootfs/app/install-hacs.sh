@@ -57,7 +57,7 @@ fi
 
 # 6. 下载 HACS
 log_info "Downloading HACS..."
-if curl -fL -o "$DOWNLOAD_PATH" "$DOWNLOAD_URL"; then
+if curl -fsSL -o "$DOWNLOAD_PATH" "$DOWNLOAD_URL"; then
     log_info "Download complete."
 else
     rm -f "$DOWNLOAD_PATH"

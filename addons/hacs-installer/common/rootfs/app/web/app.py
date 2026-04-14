@@ -156,7 +156,7 @@ def run_script_thread(script_path, operation_name, success_msg, operation_id):
                 operation_id=operation_id,
                 status='success',
                 message=success_msg,
-                detail=detail,
+                detail='',
                 finished_at=int(time.time()),
             )
         else:
