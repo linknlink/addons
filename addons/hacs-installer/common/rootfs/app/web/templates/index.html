@@ -23,8 +23,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 24px;
+            box-sizing: border-box;
         }
 
         .container {
@@ -33,7 +35,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             text-align: center;
-            max-width: 400px;
+            max-width: 460px;
             width: 100%;
         }
 
@@ -279,6 +281,48 @@
             border-top: 1px solid #e5e7eb;
             margin: 12px 0;
         }
+
+        .next-steps {
+            margin: 1rem 0 1.25rem;
+            padding: 0.875rem 1rem;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            background-color: #eff6ff;
+            color: #1e3a8a;
+            text-align: left;
+        }
+
+        .next-steps-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .next-steps ol {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .next-steps li {
+            font-size: 0.84rem;
+            line-height: 1.45;
+            margin: 0.35rem 0;
+        }
+
+        .next-steps code {
+            background: rgba(30, 64, 175, 0.1);
+            border-radius: 4px;
+            padding: 0.05rem 0.25rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.8rem;
+        }
+
+        .next-steps .note {
+            margin-top: 0.65rem;
+            font-size: 0.8rem;
+            line-height: 1.45;
+            color: #1d4ed8;
+        }
     </style>
 </head>
 
@@ -295,6 +339,18 @@
             <br>
             <small>Target Path: {{ target_path }}</small>
         </p>
+
+        <div id="next-steps" class="next-steps">
+            <div class="next-steps-title">Next steps after installing HACS files</div>
+            <ol>
+                <li>Restart Home Assistant.</li>
+                <li>Open Home Assistant: <code>Settings &gt; Devices &amp; services &gt; Add integration</code>.</li>
+                <li>Search for <code>HACS</code> and finish the GitHub authorization flow.</li>
+            </ol>
+            <div class="note">
+                If HACS does not appear in the integration search or sidebar, hard refresh the browser or clear the Home Assistant frontend cache.
+            </div>
+        </div>
 
         <div class="btn-group">
             <button id="install-btn" class="btn-install"

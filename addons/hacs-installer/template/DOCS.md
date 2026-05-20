@@ -16,21 +16,17 @@ HACS Installer 是一个辅助工具，用于帮助您快速将 HACS (Home Assis
    - 工具会自动从 GitHub 下载最新版本的 HACS。
    - 解压并安装到 `custom_components/hacs` 目录。
 3. **完成安装**：安装成功后界面会有相应提示。此时您可以直接重启 HA 容器，或者在 HA 页面中执行重启操作，以使 HACS 生效。
+4. **添加 HACS 集成**：Home Assistant 重启完成后，还需要在 HA 中添加 HACS 集成。
+   - 进入 Home Assistant -> 设置 -> 设备与服务 -> 添加集成。
+   - 搜索 "HACS"。
+   - 按照提示完成 GitHub 授权。
+   - 如果搜索不到 HACS，或侧边栏没有出现 HACS，请强制刷新浏览器页面或清除 Home Assistant 前端缓存。
 
 ## 卸载 HACS
 
 如果需要卸载 HACS，请在 Web 界面点击"卸载 HACS"按钮。
 - 工具会移除 `custom_components/hacs` 目录。
 - 卸载后同样需要重启 Home Assistant。
-
-## 后续步骤
-
-安装完成后，您需要：
-1. **重启 Home Assistant**：必须重启才能使 HACS 生效。
-2. **添加集成**：
-   - 进入 Home Assistant -> 配置 -> 设备与服务 -> 添加集成。
-   - 搜索 "HACS"。
-   - 按照提示完成 GitHub 授权。
 
 ## 常见问题
 

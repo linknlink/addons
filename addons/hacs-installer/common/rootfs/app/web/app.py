@@ -202,7 +202,7 @@ def install():
             args=(
                 '/app/install-hacs.sh',
                 'Install',
-                'HACS installed successfully! Please restart Home Assistant.',
+                'HACS files installed. Restart Home Assistant, then add the HACS integration in Home Assistant.',
                 operation_id,
             ),
             daemon=True,
@@ -237,7 +237,7 @@ def uninstall():
             args=(
                 '/app/uninstall-hacs.sh',
                 'Uninstall',
-                'HACS uninstalled successfully! Please restart Home Assistant.',
+                'HACS files removed. Please restart Home Assistant to clear the integration from runtime.',
                 operation_id,
             ),
             daemon=True,
@@ -270,7 +270,7 @@ def restart_ha():
         
         container_name = container.name
         container.restart(timeout=30)
-        return jsonify({'status': 'success', 'message': f'Home Assistant ({container_name}) is restarting...'})
+        return jsonify({'status': 'success', 'message': f'Home Assistant ({container_name}) is restarting. After it comes back, add HACS from Settings > Devices & services > Add integration.'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'Restart failed: {str(e)}'})
 
