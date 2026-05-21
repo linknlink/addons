@@ -1,7 +1,7 @@
 {
   "name": "HACS Installer",
   "addonid": "0",
-  "addondescription": "One-click installation and management for HACS (Home Assistant Community Store), simplifying the Home Assistant integration installation process.",
+  "addondescription": "Install HACS files and guide users to restart Home Assistant, add the HACS integration, and complete GitHub authorization.",
   "version": "1.0.0",
   "visiturl": "",
   "issupportupdate": 0,

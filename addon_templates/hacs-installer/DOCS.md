@@ -16,21 +16,17 @@ HACS Installer is a utility tool designed to help you quickly install HACS (Home
    - The tool will automatically download the latest version of HACS from GitHub.
    - Unzip and install it to the `custom_components/hacs` directory.
 3. **Complete Installation**: The interface will indicate success once the installation finishes. At this point, you can directly restart the HA container or restart HA from the HA web interface to make HACS take effect.
+4. **Add HACS Integration**: After Home Assistant has restarted, add the HACS integration in Home Assistant.
+   - Go to Home Assistant -> Settings -> Devices & Services -> Add Integration.
+   - Search for "HACS".
+   - Follow the prompts to complete GitHub authorization.
+   - If HACS does not appear in the integration search or sidebar, hard refresh the browser or clear the Home Assistant frontend cache.
 
 ## Uninstall HACS
 
 If you need to uninstall HACS, please click the "Uninstall HACS" button on the Web interface.
 - The tool will remove the `custom_components/hacs` directory.
 - You still need to restart Home Assistant after uninstallation.
-
-## Next Steps
-
-After installation is complete, you need to:
-1. **Restart Home Assistant**: You must restart for HACS to take effect.
-2. **Add Integration**:
-   - Go to Home Assistant -> Settings -> Devices & Services -> Add Integration.
-   - Search for "HACS".
-   - Follow the prompts to complete GitHub authorization.
 
 ## FAQ
 

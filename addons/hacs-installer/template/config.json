@@ -2,7 +2,7 @@
     "name": "HACS Installer",
     "version": "1.0.0",
     "slug": "hacs_installer",
-    "description": "一键安装和管理 HACS (Home Assistant Community Store)",
+    "description": "安装 HACS 文件，并引导完成 Home Assistant 集成配置",
     "arch": [
         "aarch64",
         "amd64",

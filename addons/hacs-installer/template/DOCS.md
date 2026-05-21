@@ -1,7 +1,7 @@
 # HACS Installer 使用说明
 
 ## 简介
-HACS Installer 是一个辅助工具，用于帮助您快速将 HACS (Home Assistant Community Store) 安装到您的 Home Assistant 实例中。
+HACS Installer 是一个辅助工具，用于帮助您快速将 HACS (Home Assistant Community Store) 安装到 Home Assistant，并完成后续的 HACS 集成配置。
 
 ## 安装步骤
 
@@ -12,7 +12,7 @@ HACS Installer 是一个辅助工具，用于帮助您快速将 HACS (Home Assis
 ## 操作指南
 
 1. **检查状态**：打开 Web 界面后，工具会自动检查是否已安装 HACS。
-2. **开始安装**：如果未安装，点击"开始安装"按钮。
+2. **开始安装**：如果未安装，点击 "Install HACS" 按钮。
    - 工具会自动从 GitHub 下载最新版本的 HACS。
    - 解压并安装到 `custom_components/hacs` 目录。
 3. **完成安装**：安装成功后界面会有相应提示。此时您可以直接重启 HA 容器，或者在 HA 页面中执行重启操作，以使 HACS 生效。
@@ -36,4 +36,4 @@ A: 请检查：
 - 网络是否正常（需要访问 GitHub）。
 
 **Q: 安装后找不到 HACS 集成？**
-A: 请确保已重启 Home Assistant，并清除浏览器缓存。
+A: 请确认已经重启 Home Assistant，并尝试强制刷新浏览器页面或清除 Home Assistant 前端缓存。
